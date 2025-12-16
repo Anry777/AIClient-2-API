@@ -74,8 +74,8 @@ function ensureRolesInContents(requestBody) {
         delete requestBody.system_instruction;
     }
 
-    if (requestBody.systemInstruction && !requestBody.systemInstruction.role) {
-        requestBody.systemInstruction.role = 'user';
+    if (requestBody.systemInstruction && requestBody.systemInstruction.role) {
+        delete requestBody.systemInstruction.role;
     }
 
     if (requestBody.contents && Array.isArray(requestBody.contents)) {
@@ -441,11 +441,25 @@ export class GeminiApiService {
             const res = await this.authClient.request(requestOptions);
             return res.data;
         } catch (error) {
-            console.error(`[API] Error calling ${method}:`, error.response?.status, error.message);
+            const status = error.response?.status;
+            let errorDetails = '';
+            try {
+                if (error.response?.data) {
+                    errorDetails = typeof error.response.data === 'string'
+                        ? error.response.data
+                        : JSON.stringify(error.response.data);
+                }
+            } catch (_e) {
+                errorDetails = '';
+            }
+            console.error(`[API] Error calling ${method}:`, status, error.message);
+            if (errorDetails) {
+                console.error(`[API] Error details for ${method}:`, errorDetails);
+            }
 
             // Handle 401 (Unauthorized) - refresh auth and retry once
-            if ((error.response?.status === 400 || error.response?.status === 401) && !isRetry) {
-                console.log('[API] Received 401/400. Refreshing auth and retrying...');
+            if (status === 401 && !isRetry) {
+                console.log('[API] Received 401. Refreshing auth and retrying...');
                 await this.initializeAuth(true);
                 return this.callApi(method, body, true, retryCount);
             }
@@ -491,11 +505,28 @@ export class GeminiApiService {
             }
             yield* this.parseSSEStream(res.data);
         } catch (error) {
-            console.error(`[API] Error during stream ${method}:`, error.response?.status, error.message);
+            const status = error.response?.status;
+            let errorDetails = '';
+            try {
+                const data = error.response?.data;
+                if (data && typeof data?.[Symbol.asyncIterator] === 'function') {
+                    let buffered = '';
+                    for await (const chunk of data) buffered += chunk.toString();
+                    errorDetails = buffered;
+                } else if (data) {
+                    errorDetails = typeof data === 'string' ? data : JSON.stringify(data);
+                }
+            } catch (_e) {
+                errorDetails = '';
+            }
+            console.error(`[API] Error during stream ${method}:`, status, error.message);
+            if (errorDetails) {
+                console.error(`[API] Stream error details for ${method}:`, errorDetails);
+            }
 
             // Handle 401 (Unauthorized) - refresh auth and retry once
-            if ((error.response?.status === 400 || error.response?.status === 401) && !isRetry) {
-                console.log('[API] Received 401/400 during stream. Refreshing auth and retrying...');
+            if (status === 401 && !isRetry) {
+                console.log('[API] Received 401 during stream. Refreshing auth and retrying...');
                 await this.initializeAuth(true);
                 yield* this.streamApi(method, body, true, retryCount);
                 return;

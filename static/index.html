@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta name="theme-color" content="#059669">
-    <meta name="description" content="AIClient2API 管理控制台 - 统一管理AI服务提供商">
-    <title>AIClient2API - 管理控制台</title>
+    <meta name="description" content="AIClient2API Management Console - Unified AI provider management">
+    <title>AIClient2API - Management Console</title>
     <link rel="stylesheet" href="app/styles.css">
     <link rel="stylesheet" href="app/mobile.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,17 +15,17 @@
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <h1><i class="fas fa-robot"></i> <span class="header-title">AIClient2API 管理控制台</span></h1>
+                <h1><i class="fas fa-robot"></i> <span class="header-title">AIClient2API Management Console</span></h1>
                 <div class="header-controls">
                     <span class="status-badge" id="serverStatus">
-                        <i class="fas fa-circle"></i> <span class="status-text">连接中...</span>
+                        <i class="fas fa-circle"></i> <span class="status-text">Connecting...</span>
                     </span>
-                    <button id="logoutBtn" class="logout-btn" title="登出">
-                        <i class="fas fa-sign-out-alt"></i> 登出
+                    <button id="logoutBtn" class="logout-btn" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i> Logout
                     </button>
                     </span>
-                    <button id="refreshBtn" class="logout-btn" aria-label="刷新数据">
-                        <i class="fas fa-sync-alt"></i> <span class="btn-text">重载</span>
+                    <button id="refreshBtn" class="logout-btn" aria-label="Refresh data">
+                        <i class="fas fa-sync-alt"></i> <span class="btn-text">Reload</span>
                     </button>
                 </div>
             </div>
@@ -34,22 +34,22 @@
         <!-- Main Content -->
         <div class="main-content">
             <!-- Sidebar -->
-            <aside class="sidebar" role="navigation" aria-label="主导航">
+            <aside class="sidebar" role="navigation" aria-label="Main navigation">
                 <nav class="sidebar-nav">
-                    <a href="#dashboard" class="nav-item active" data-section="dashboard" aria-label="仪表盘">
-                        <i class="fas fa-tachometer-alt" aria-hidden="true"></i> <span>仪表盘</span>
+                    <a href="#dashboard" class="nav-item active" data-section="dashboard" aria-label="Dashboard">
+                        <i class="fas fa-tachometer-alt" aria-hidden="true"></i> <span>Dashboard</span>
                     </a>
-                    <a href="#config" class="nav-item" data-section="config" aria-label="配置管理">
-                        <i class="fas fa-cog" aria-hidden="true"></i> <span>配置管理</span>
+                    <a href="#config" class="nav-item" data-section="config" aria-label="Configuration">
+                        <i class="fas fa-cog" aria-hidden="true"></i> <span>Configuration</span>
                     </a>
-                    <a href="#providers" class="nav-item" data-section="providers" aria-label="提供商池管理">
-                        <i class="fas fa-network-wired" aria-hidden="true"></i> <span>提供商池管理</span>
+                    <a href="#providers" class="nav-item" data-section="providers" aria-label="Provider Pools">
+                        <i class="fas fa-network-wired" aria-hidden="true"></i> <span>Provider Pools</span>
                     </a>
-                    <a href="#upload-config" class="nav-item" data-section="upload-config" aria-label="上传配置管理">
-                        <i class="fas fa-upload" aria-hidden="true"></i> <span>上传配置管理</span>
+                    <a href="#upload-config" class="nav-item" data-section="upload-config" aria-label="Upload Configs">
+                        <i class="fas fa-upload" aria-hidden="true"></i> <span>Upload Configs</span>
                     </a>
-                    <a href="#logs" class="nav-item" data-section="logs" aria-label="实时日志">
-                        <i class="fas fa-file-alt" aria-hidden="true"></i> <span>实时日志</span>
+                    <a href="#logs" class="nav-item" data-section="logs" aria-label="Logs">
+                        <i class="fas fa-file-alt" aria-hidden="true"></i> <span>Logs</span>
                     </a>
                 </nav>
             </aside>
@@ -58,7 +58,7 @@
             <main class="content" role="main">
                 <!-- Dashboard Section -->
                 <section id="dashboard" class="section active" aria-labelledby="dashboard-title">
-                    <h2 id="dashboard-title">系统概览</h2>
+                    <h2 id="dashboard-title">System Overview</h2>
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-icon">
@@ -66,29 +66,29 @@
                             </div>
                             <div class="stat-info">
                                 <h3 id="uptime">--</h3>
-                                <p>运行时间</p>
+                                <p>Uptime</p>
                             </div>
                         </div>
                     </div>
                     <!-- System Information Panel -->
                     <div class="system-info-panel">
-                        <h3>系统信息</h3>
+                        <h3>System Information</h3>
                         <div class="info-grid">
                             <div class="info-item">
                                 <span class="info-label">
-                                    <i class="fas fa-code"></i> Node.js版本
+                                    <i class="fas fa-code"></i> Node.js Version
                                 </span>
                                 <span class="info-value" id="nodeVersion">--</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">
-                                    <i class="fas fa-clock"></i> 服务器时间
+                                    <i class="fas fa-clock"></i> Server Time
                                 </span>
                                 <span class="info-value" id="serverTime">--</span>
                             </div>
                             <div class="info-item">
                                 <span class="info-label">
-                                    <i class="fas fa-memory"></i> 内存使用
+                                    <i class="fas fa-memory"></i> Memory Usage
                                 </span>
                                 <span class="info-value" id="memoryUsage">--</span>
                             </div>
@@ -97,31 +97,31 @@
 
                     <!-- Path Routing Examples Panel -->
                     <div class="routing-examples-panel">
-                        <h3><i class="fas fa-route"></i> 路径路由调用示例</h3>
-                        <p class="routing-description">通过不同路径路由访问不同的AI模型提供商，支持灵活的模型切换</p>
+                        <h3><i class="fas fa-route"></i> Path Routing Examples</h3>
+                        <p class="routing-description">Access different AI providers via path-based routing and switch models flexibly</p>
                         
                         <div class="routing-examples-grid">
                             <div class="routing-example-card" data-provider="gemini-cli-oauth-card">
                                 <div class="routing-card-header">
                                     <i class="fas fa-gem"></i>
                                     <h4>Gemini CLI OAuth</h4>
-                                    <span class="provider-badge oauth">突破限制</span>
+                                    <span class="provider-badge oauth">Bypass limits</span>
                                 </div>
                                 <div class="routing-card-content">
-                                    <!-- 协议标签切换 -->
+                                    <!-- Protocol tab switching -->
                                     <div class="protocol-tabs">
-                                        <button class="protocol-tab" data-protocol="openai">OpenAI协议</button>
-                                        <button class="protocol-tab active" data-protocol="claude">Claude协议</button>
+                                        <button class="protocol-tab" data-protocol="openai">OpenAI</button>
+                                        <button class="protocol-tab active" data-protocol="claude">Claude</button>
                                     </div>
                                     
-                                    <!-- OpenAI协议示例 -->
+                                    <!-- OpenAI protocol example -->
                                     <div class="protocol-content" data-protocol="openai">
                                         <div class="endpoint-info">
-                                            <label>端点路径:</label>
+                                            <label>Endpoint path:</label>
                                             <code class="endpoint-path">/gemini-cli-oauth/v1/chat/completions</code>
                                         </div>
                                         <div class="usage-example">
-                                            <label>使用示例 (OpenAI格式):</label>
+                                            <label>Example (OpenAI format):</label>
                                             <pre><code>curl http://localhost:3000/gemini-cli-oauth/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
@@ -133,14 +133,14 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Claude协议示例 -->
+                                    <!-- Claude protocol example -->
                                     <div class="protocol-content active" data-protocol="claude">
                                         <div class="endpoint-info">
-                                            <label>端点路径:</label>
+                                            <label>Endpoint path:</label>
                                             <code class="endpoint-path">/gemini-cli-oauth/v1/messages</code>
                                         </div>
                                         <div class="usage-example">
-                                            <label>使用示例 (Claude格式):</label>
+                                            <label>Example (Claude format):</label>
                                             <pre><code>curl http://localhost:3000/gemini-cli-oauth/v1/messages \
   -H "Content-Type: application/json" \
   -H "X-API-Key: YOUR_API_KEY" \
@@ -158,23 +158,23 @@
                                 <div class="routing-card-header">
                                     <i class="fas fa-rocket"></i>
                                     <h4>Gemini Antigravity</h4>
-                                    <span class="provider-badge oauth">突破限制/实验性</span>
+                                    <span class="provider-badge oauth">Bypass limits / Experimental</span>
                                 </div>
                                 <div class="routing-card-content">
-                                    <!-- 协议标签切换 -->
+                                    <!-- Protocol tab switching -->
                                     <div class="protocol-tabs">
-                                        <button class="protocol-tab" data-protocol="openai">OpenAI协议</button>
-                                        <button class="protocol-tab active" data-protocol="claude">Claude协议</button>
+                                        <button class="protocol-tab" data-protocol="openai">OpenAI</button>
+                                        <button class="protocol-tab active" data-protocol="claude">Claude</button>
                                     </div>
                                     
-                                    <!-- OpenAI协议示例 -->
+                                    <!-- OpenAI protocol example -->
                                     <div class="protocol-content" data-protocol="openai">
                                         <div class="endpoint-info">
-                                            <label>端点路径:</label>
+                                            <label>Endpoint path:</label>
                                             <code class="endpoint-path">/gemini-antigravity/v1/chat/completions</code>
                                         </div>
                                         <div class="usage-example">
-                                            <label>使用示例 (OpenAI格式):</label>
+                                            <label>Example (OpenAI format):</label>
                                             <pre><code>curl http://localhost:3000/gemini-antigravity/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
@@ -186,14 +186,14 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Claude协议示例 -->
+                                    <!-- Claude protocol example -->
                                     <div class="protocol-content active" data-protocol="claude">
                                         <div class="endpoint-info">
-                                            <label>端点路径:</label>
+                                            <label>Endpoint path:</label>
                                             <code class="endpoint-path">/gemini-antigravity/v1/messages</code>
                                         </div>
                                         <div class="usage-example">
-                                            <label>使用示例 (Claude格式):</label>
+                                            <label>Example (Claude format):</label>
                                             <pre><code>curl http://localhost:3000/gemini-antigravity/v1/messages \
   -H "Content-Type: application/json" \
   -H "X-API-Key: YOUR_API_KEY" \
@@ -211,23 +211,23 @@
                                 <div class="routing-card-header">
                                     <i class="fas fa-brain"></i>
                                     <h4>Claude Custom</h4>
-                                    <span class="provider-badge official">官方API/三方</span>
+                                    <span class="provider-badge official">Official / 3rd-party</span>
                                 </div>
                                 <div class="routing-card-content">
-                                    <!-- 协议标签切换 -->
+                                    <!-- Protocol tab switching -->
                                     <div class="protocol-tabs">
-                                        <button class="protocol-tab" data-protocol="openai">OpenAI协议</button>
-                                        <button class="protocol-tab active" data-protocol="claude">Claude协议</button>
+                                        <button class="protocol-tab" data-protocol="openai">OpenAI</button>
+                                        <button class="protocol-tab active" data-protocol="claude">Claude</button>
                                     </div>
                                     
-                                    <!-- OpenAI协议示例 -->
+                                    <!-- OpenAI protocol example -->
                                     <div class="protocol-content" data-protocol="openai">
                                         <div class="endpoint-info">
-                                            <label>端点路径:</label>
+                                            <label>Endpoint path:</label>
                                             <code class="endpoint-path">/claude-custom/v1/chat/completions</code>
                                         </div>
                                         <div class="usage-example">
-                                            <label>使用示例 (OpenAI格式):</label>
+                                            <label>Example (OpenAI format):</label>
                                             <pre><code>curl http://localhost:3000/claude-custom/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
@@ -239,14 +239,14 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Claude协议示例 -->
+                                    <!-- Claude protocol example -->
                                     <div class="protocol-content active" data-protocol="claude">
                                         <div class="endpoint-info">
-                                            <label>端点路径:</label>
+                                            <label>Endpoint path:</label>
                                             <code class="endpoint-path">/claude-custom/v1/messages</code>
                                         </div>
                                         <div class="usage-example">
-                                            <label>使用示例 (Claude格式):</label>
+                                            <label>Example (Claude format):</label>
                                             <pre><code>curl http://localhost:3000/claude-custom/v1/messages \
   -H "Content-Type: application/json" \
   -H "X-API-Key: YOUR_API_KEY" \
@@ -264,23 +264,23 @@
                                 <div class="routing-card-header">
                                     <i class="fas fa-robot"></i>
                                     <h4>Claude Kiro OAuth</h4>
-                                    <span class="provider-badge oauth">突破限制/免费使用</span>
+                                    <span class="provider-badge oauth">Bypass limits / Free</span>
                                 </div>
                                 <div class="routing-card-content">
-                                    <!-- 协议标签切换 -->
+                                    <!-- Protocol tab switching -->
                                     <div class="protocol-tabs">
-                                        <button class="protocol-tab" data-protocol="openai">OpenAI协议</button>
-                                        <button class="protocol-tab active" data-protocol="claude">Claude协议</button>
+                                        <button class="protocol-tab" data-protocol="openai">OpenAI</button>
+                                        <button class="protocol-tab active" data-protocol="claude">Claude</button>
                                     </div>
                                     
-                                    <!-- OpenAI协议示例 -->
+                                    <!-- OpenAI protocol example -->
                                     <div class="protocol-content" data-protocol="openai">
                                         <div class="endpoint-info">
-                                            <label>端点路径:</label>
+                                            <label>Endpoint path:</label>
                                             <code class="endpoint-path">/claude-kiro-oauth/v1/chat/completions</code>
                                         </div>
                                         <div class="usage-example">
-                                            <label>使用示例 (OpenAI格式):</label>
+                                            <label>Example (OpenAI format):</label>
                                             <pre><code>curl http://localhost:3000/claude-kiro-oauth/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
@@ -292,14 +292,14 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Claude协议示例 -->
+                                    <!-- Claude protocol example -->
                                     <div class="protocol-content active" data-protocol="claude">
                                         <div class="endpoint-info">
-                                            <label>端点路径:</label>
+                                            <label>Endpoint path:</label>
                                             <code class="endpoint-path">/claude-kiro-oauth/v1/messages</code>
                                         </div>
                                         <div class="usage-example">
-                                            <label>使用示例 (Claude格式):</label>
+                                            <label>Example (Claude format):</label>
                                             <pre><code>curl http://localhost:3000/claude-kiro-oauth/v1/messages \
   -H "Content-Type: application/json" \
   -H "X-API-Key: YOUR_API_KEY" \
@@ -317,23 +317,23 @@
                                 <div class="routing-card-header">
                                     <i class="fas fa-comments"></i>
                                     <h4>OpenAI Custom</h4>
-                                    <span class="provider-badge official">官方API/三方</span>
+                                    <span class="provider-badge official">Official / 3rd-party</span>
                                 </div>
                                 <div class="routing-card-content">
-                                    <!-- 协议标签切换 -->
+                                    <!-- Protocol tab switching -->
                                     <div class="protocol-tabs">
-                                        <button class="protocol-tab" data-protocol="openai">OpenAI协议</button>
-                                        <button class="protocol-tab active" data-protocol="claude">Claude协议</button>
+                                        <button class="protocol-tab" data-protocol="openai">OpenAI</button>
+                                        <button class="protocol-tab active" data-protocol="claude">Claude</button>
                                     </div>
                                     
-                                    <!-- OpenAI协议示例 -->
+                                    <!-- OpenAI protocol example -->
                                     <div class="protocol-content" data-protocol="openai">
                                         <div class="endpoint-info">
-                                            <label>端点路径:</label>
+                                            <label>Endpoint path:</label>
                                             <code class="endpoint-path">/openai-custom/v1/chat/completions</code>
                                         </div>
                                         <div class="usage-example">
-                                            <label>使用示例 (OpenAI格式):</label>
+                                            <label>Example (OpenAI format):</label>
                                             <pre><code>curl http://localhost:3000/openai-custom/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
@@ -345,14 +345,14 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Claude协议示例 -->
+                                    <!-- Claude protocol example -->
                                     <div class="protocol-content active" data-protocol="claude">
                                         <div class="endpoint-info">
-                                            <label>端点路径:</label>
+                                            <label>Endpoint path:</label>
                                             <code class="endpoint-path">/openai-custom/v1/messages</code>
                                         </div>
                                         <div class="usage-example">
-                                            <label>使用示例 (Claude格式):</label>
+                                            <label>Example (Claude format):</label>
                                             <pre><code>curl http://localhost:3000/openai-custom/v1/messages \
   -H "Content-Type: application/json" \
   -H "X-API-Key: YOUR_API_KEY" \
@@ -370,23 +370,23 @@
                                 <div class="routing-card-header">
                                     <i class="fas fa-code"></i>
                                     <h4>Qwen OAuth</h4>
-                                    <span class="provider-badge oauth">突破限制</span>
+                                    <span class="provider-badge oauth">Bypass limits</span>
                                 </div>
                                 <div class="routing-card-content">
-                                    <!-- 协议标签切换 -->
+                                    <!-- Protocol tab switching -->
                                     <div class="protocol-tabs">
-                                        <button class="protocol-tab" data-protocol="openai">OpenAI协议</button>
-                                        <button class="protocol-tab active" data-protocol="claude">Claude协议</button>
+                                        <button class="protocol-tab" data-protocol="openai">OpenAI</button>
+                                        <button class="protocol-tab active" data-protocol="claude">Claude</button>
                                     </div>
                                     
-                                    <!-- OpenAI协议示例 -->
+                                    <!-- OpenAI protocol example -->
                                     <div class="protocol-content" data-protocol="openai">
                                         <div class="endpoint-info">
-                                            <label>端点路径:</label>
+                                            <label>Endpoint path:</label>
                                             <code class="endpoint-path">/openai-qwen-oauth/v1/chat/completions</code>
                                         </div>
                                         <div class="usage-example">
-                                            <label>使用示例 (OpenAI格式):</label>
+                                            <label>Example (OpenAI format):</label>
                                             <pre><code>curl http://localhost:3000/openai-qwen-oauth/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
@@ -398,14 +398,14 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Claude协议示例 -->
+                                    <!-- Claude protocol example -->
                                     <div class="protocol-content active" data-protocol="claude">
                                         <div class="endpoint-info">
-                                            <label>端点路径:</label>
+                                            <label>Endpoint path:</label>
                                             <code class="endpoint-path">/openai-qwen-oauth/v1/messages</code>
                                         </div>
                                         <div class="usage-example">
-                                            <label>使用示例 (Claude格式):</label>
+                                            <label>Example (Claude format):</label>
                                             <pre><code>curl http://localhost:3000/openai-qwen-oauth/v1/messages \
   -H "Content-Type: application/json" \
   -H "X-API-Key: YOUR_API_KEY" \
@@ -422,32 +422,32 @@
                         </div>
 
                         <div class="routing-tips">
-                            <h4><i class="fas fa-lightbulb"></i> 使用提示</h4>
+                            <h4><i class="fas fa-lightbulb"></i> Tips</h4>
                             <ul>
-                                <li><strong>即时切换:</strong> 通过修改URL路径即可切换不同的AI模型提供商</li>
-                                <li><strong>客户端配置:</strong> 在Cherry-Studio、NextChat、Cline等客户端中设置API端点为对应路径</li>
-                                <li><strong>跨协议调用:</strong> 支持OpenAI协议调用Claude模型，或Claude协议调用OpenAI模型</li>
+                                <li><strong>Instant switch:</strong> Change the URL path to switch providers</li>
+                                <li><strong>Client setup:</strong> Configure the API endpoint in Cherry-Studio, NextChat, Cline, etc.</li>
+                                <li><strong>Cross-protocol calls:</strong> Use OpenAI format to call Claude models, or Claude format to call OpenAI models</li>
                             </ul>
                         </div>
                     </div>
                     
                     <!-- Contact and Sponsor Section -->
                     <div class="contact-section">
-                        <h3><i class="fas fa-qrcode"></i> 联系与赞助</h3>
+                        <h3><i class="fas fa-qrcode"></i> Contact & Sponsorship</h3>
                         <div class="contact-grid">
                             <div class="contact-card">
-                                <h3><i class="fab fa-weixin"></i> 扫码进群，注明来意</h3>
+                                <h3><i class="fab fa-weixin"></i> Scan to join the group (please include your purpose)</h3>
                                 <div class="qr-container">
-                                    <img src="static/wechat.png" alt="微信二维码" class="qr-code">
+                                    <img src="static/wechat.png" alt="WeChat QR" class="qr-code">
                                 </div>
-                                <p class="qr-description">添加微信获取更多技术支持和交流</p>
+                                <p class="qr-description">Add on WeChat for support and discussion</p>
                             </div>
                             <div class="contact-card">
-                                <h3><i class="fas fa-heart"></i> 扫码赞助</h3>
+                                <h3><i class="fas fa-heart"></i> Scan to sponsor</h3>
                                 <div class="qr-container">
-                                    <img src="static/sponsor.png" alt="赞助二维码" class="qr-code">
+                                    <img src="static/sponsor.png" alt="Sponsor QR" class="qr-code">
                                 </div>
-                                <p class="qr-description">您的赞助是项目持续发展的动力</p>
+                                <p class="qr-description">Your sponsorship helps keep the project growing</p>
                             </div>
                         </div>
                     </div>
@@ -455,30 +455,30 @@
 
                 <!-- Configuration Section -->
                 <section id="config" class="section" aria-labelledby="config-title">
-                    <h2 id="config-title">配置管理</h2>
+                    <h2 id="config-title">Configuration</h2>
                     <div class="config-panel">
                         <div class="config-form">
                             <div class="form-group password-input-group">
-                                <label for="apiKey">API密钥</label>
+                                <label for="apiKey">API key</label>
                                 <div class="password-input-wrapper">
-                                    <input type="password" id="apiKey" class="form-control" placeholder="请输入API密钥" autocomplete="off">
-                                    <button type="button" class="password-toggle" data-target="apiKey" aria-label="显示/隐藏密码">
+                                    <input type="password" id="apiKey" class="form-control" placeholder="Enter API key" autocomplete="off">
+                                    <button type="button" class="password-toggle" data-target="apiKey" aria-label="Show/hide password">
                                         <i class="fas fa-eye" aria-hidden="true"></i>
                                     </button>
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="host">监听地址</label>
+                                    <label for="host">Host</label>
                                     <input type="text" id="host" class="form-control" value="127.0.0.1">
                                 </div>
                                 <div class="form-group">
-                                    <label for="port">端口</label>
+                                    <label for="port">Port</label>
                                     <input type="number" id="port" class="form-control" value="3000">
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label for="modelProvider">模型提供商</label>
+                                <label for="modelProvider">Model provider</label>
                                 <select id="modelProvider" class="form-control">
                                     <option value="gemini-cli-oauth">Gemini CLI OAuth</option>
                                     <option value="gemini-antigravity">Gemini Antigravity</option>
@@ -490,55 +490,55 @@
                                 </select>
                             </div>
                             
-                            <!-- Gemini CLI OAuth 配置 -->
+                            <!-- Gemini CLI OAuth configuration -->
                             <div class="provider-config" data-provider="gemini-cli-oauth">
                                 <div class="form-group">
-                                    <label for="projectId">项目ID</label>
-                                    <input type="text" id="projectId" class="form-control" placeholder="Google Cloud项目ID">
+                                    <label for="projectId">Project ID</label>
+                                    <input type="text" id="projectId" class="form-control" placeholder="Google Cloud Project ID">
                                 </div>
                                 <div class="form-group">
-                                    <label>OAuth凭据</label>
+                                    <label>OAuth credentials</label>
                                     <div class="radio-group">
                                         <label class="radio-label">
                                             <input type="radio" name="geminiCredsType" value="file" checked>
-                                            文件路径
+                                            File path
                                         </label>
                                         <label class="radio-label">
                                             <input type="radio" name="geminiCredsType" value="base64">
-                                            Base64编码
+                                            Base64
                                         </label>
                                     </div>
                                 </div>
                                 <div class="form-group" id="geminiCredsBase64Group">
-                                    <label for="geminiOauthCredsBase64">OAuth凭据 (Base64)</label>
-                                    <textarea id="geminiOauthCredsBase64" class="form-control" rows="3" placeholder="请输入Base64编码的OAuth凭据"></textarea>
+                                    <label for="geminiOauthCredsBase64">OAuth credentials (Base64)</label>
+                                    <textarea id="geminiOauthCredsBase64" class="form-control" rows="3" placeholder="Paste Base64-encoded OAuth credentials"></textarea>
                                 </div>
                                 <div class="form-group" id="geminiCredsFileGroup" style="display: none;">
-                                    <label for="geminiOauthCredsFilePath">OAuth凭据文件路径</label>
+                                    <label for="geminiOauthCredsFilePath">OAuth credentials file path</label>
                                     <div class="file-input-group">
-                                        <input type="text" id="geminiOauthCredsFilePath" class="form-control" placeholder="例如: ~/.gemini/oauth_creds.json">
-                                        <button type="button" class="btn btn-outline upload-btn" data-target="geminiOauthCredsFilePath" aria-label="上传文件">
+                                        <input type="text" id="geminiOauthCredsFilePath" class="form-control" placeholder="e.g. ~/.gemini/oauth_creds.json">
+                                        <button type="button" class="btn btn-outline upload-btn" data-target="geminiOauthCredsFilePath" aria-label="Upload file">
                                             <i class="fas fa-upload"></i>
                                         </button>
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- Gemini Antigravity 配置 -->
+                            <!-- Gemini Antigravity configuration -->
                             <div class="provider-config" data-provider="gemini-antigravity" style="display: none;">
                                 <div class="form-group">
-                                    <label for="antigravityOauthCredsFilePath">OAuth凭据文件路径</label>
+                                    <label for="antigravityOauthCredsFilePath">OAuth credentials file path</label>
                                     <div class="file-input-group">
-                                        <input type="text" id="antigravityOauthCredsFilePath" class="form-control" placeholder="例如: ~/.antigravity/oauth_creds.json">
-                                        <button type="button" class="btn btn-outline upload-btn" data-target="antigravityOauthCredsFilePath" aria-label="上传文件">
+                                        <input type="text" id="antigravityOauthCredsFilePath" class="form-control" placeholder="e.g. ~/.antigravity/oauth_creds.json">
+                                        <button type="button" class="btn btn-outline upload-btn" data-target="antigravityOauthCredsFilePath" aria-label="Upload file">
                                             <i class="fas fa-upload"></i>
                                         </button>
                                     </div>
-                                    <small class="form-text">Antigravity 使用 Google OAuth 认证，需要提供凭据文件路径</small>
+                                    <small class="form-text">Antigravity uses Google OAuth and requires the credentials file path</small>
                                 </div>
                             </div>
                             
-                            <!-- OpenAI Custom 配置 -->
+                            <!-- OpenAI Custom configuration -->
                             <div class="provider-config" data-provider="openai-custom" style="display: none;">
                                 <div class="form-group password-input-group">
                                     <label for="openaiApiKey">OpenAI API Key</label>
@@ -551,11 +551,11 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="openaiBaseUrl">OpenAI Base URL</label>
-                                    <input type="text" id="openaiBaseUrl" class="form-control" value="https://api.openai.com/v1" placeholder="例如: https://api.openai.com/v1">
+                                    <input type="text" id="openaiBaseUrl" class="form-control" value="https://api.openai.com/v1" placeholder="e.g. https://api.openai.com/v1">
                                 </div>
                             </div>
                             
-                            <!-- Claude Custom 配置 -->
+                            <!-- Claude Custom configuration -->
                             <div class="provider-config" data-provider="claude-custom" style="display: none;">
                                 <div class="form-group password-input-group">
                                     <label for="claudeApiKey">Claude API Key</label>
@@ -568,58 +568,58 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="claudeBaseUrl">Claude Base URL</label>
-                                    <input type="text" id="claudeBaseUrl" class="form-control" value="https://api.anthropic.com" placeholder="例如: https://api.anthropic.com">
+                                    <input type="text" id="claudeBaseUrl" class="form-control" value="https://api.anthropic.com" placeholder="e.g. https://api.anthropic.com">
                                 </div>
                             </div>
                             
-                            <!-- Claude Kiro OAuth 配置 -->
+                            <!-- Claude Kiro OAuth configuration -->
                             <div class="provider-config" data-provider="claude-kiro-oauth" style="display: none;">
                                 <div class="form-group">
-                                    <label>OAuth凭据</label>
+                                    <label>OAuth credentials</label>
                                     <div class="radio-group">
                                         <label class="radio-label">
                                             <input type="radio" name="kiroCredsType" value="file" checked>
-                                            文件路径
+                                            File path
                                         </label>
                                         <label class="radio-label">
                                             <input type="radio" name="kiroCredsType" value="base64">
-                                            Base64编码
+                                            Base64
                                         </label>
                                     </div>
                                 </div>
                                 <div class="form-group" id="kiroCredsBase64Group">
-                                    <label for="kiroOauthCredsBase64">OAuth凭据 (Base64)</label>
-                                    <textarea id="kiroOauthCredsBase64" class="form-control" rows="3" placeholder="请输入Base64编码的OAuth凭据"></textarea>
+                                    <label for="kiroOauthCredsBase64">OAuth credentials (Base64)</label>
+                                    <textarea id="kiroOauthCredsBase64" class="form-control" rows="3" placeholder="Paste Base64-encoded OAuth credentials"></textarea>
                                 </div>
                                 <div class="form-group" id="kiroCredsFileGroup" style="display: none;">
-                                    <label for="kiroOauthCredsFilePath">OAuth凭据文件路径</label>
+                                    <label for="kiroOauthCredsFilePath">OAuth credentials file path</label>
                                     <div class="file-input-group">
-                                        <input type="text" id="kiroOauthCredsFilePath" class="form-control" placeholder="例如: ~/.aws/sso/cache/kiro-auth-token.json">
-                                        <button type="button" class="btn btn-outline upload-btn" data-target="kiroOauthCredsFilePath" aria-label="上传文件">
+                                        <input type="text" id="kiroOauthCredsFilePath" class="form-control" placeholder="e.g. ~/.aws/sso/cache/kiro-auth-token.json">
+                                        <button type="button" class="btn btn-outline upload-btn" data-target="kiroOauthCredsFilePath" aria-label="Upload file">
                                             <i class="fas fa-upload"></i>
                                         </button>
                                     </div>
                                     <small class="form-text">
                                         <i class="fas fa-info-circle"></i>
-                                        使用 AWS 登录方式时，请确保授权文件中包含 <code>clientId</code> 和 <code>clientSecret</code> 字段
+                                        For AWS login, ensure the auth file contains <code>clientId</code> and <code>clientSecret</code>
                                     </small>
                                 </div>
                             </div>
                             
-                            <!-- Qwen OAuth 配置 -->
+                            <!-- Qwen OAuth configuration -->
                             <div class="provider-config" data-provider="openai-qwen-oauth" style="display: none;">
                                 <div class="form-group">
-                                    <label for="qwenOauthCredsFilePath">OAuth凭据文件路径</label>
+                                    <label for="qwenOauthCredsFilePath">OAuth credentials file path</label>
                                     <div class="file-input-group">
-                                        <input type="text" id="qwenOauthCredsFilePath" class="form-control" placeholder="例如: ~/.qwen/oauth_creds.json">
-                                        <button type="button" class="btn btn-outline upload-btn" data-target="qwenOauthCredsFilePath" aria-label="上传文件">
+                                        <input type="text" id="qwenOauthCredsFilePath" class="form-control" placeholder="e.g. ~/.qwen/oauth_creds.json">
+                                        <button type="button" class="btn btn-outline upload-btn" data-target="qwenOauthCredsFilePath" aria-label="Upload file">
                                             <i class="fas fa-upload"></i>
                                         </button>
                                     </div>
                                 </div>
                             </div>
                             
-                            <!-- OpenAI Responses 配置 -->
+                            <!-- OpenAI Responses configuration -->
                             <div class="provider-config" data-provider="openaiResponses-custom" style="display: none;">
                                 <div class="form-group password-input-group">
                                     <label for="openaiResponsesApiKey">OpenAI API Key</label>
@@ -632,61 +632,61 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="openaiResponsesBaseUrl">OpenAI Base URL</label>
-                                    <input type="text" id="openaiResponsesBaseUrl" class="form-control" value="https://api.openai.com/v1" placeholder="例如: https://api.openai.com/v1">
+                                    <input type="text" id="openaiResponsesBaseUrl" class="form-control" value="https://api.openai.com/v1" placeholder="e.g. https://api.openai.com/v1">
                                 </div>
                             </div>
                             
-                            <!-- 高级配置区域 -->
+                            <!-- Advanced configuration section -->
                             <div class="advanced-config-section">
-                                <h3><i class="fas fa-cogs"></i> 高级配置</h3>
+                                <h3><i class="fas fa-cogs"></i> Advanced settings</h3>
                                 
                                 <div class="config-row">
                                     <div class="form-group">
-                                        <label for="systemPromptFilePath">系统提示文件路径</label>
-                                        <input type="text" id="systemPromptFilePath" class="form-control" value="input_system_prompt.txt" placeholder="例如: input_system_prompt.txt">
+                                        <label for="systemPromptFilePath">System prompt file path</label>
+                                        <input type="text" id="systemPromptFilePath" class="form-control" value="input_system_prompt.txt" placeholder="e.g. input_system_prompt.txt">
                                     </div>
                                     <div class="form-group">
-                                        <label for="systemPromptMode">系统提示模式</label>
+                                        <label for="systemPromptMode">System prompt mode</label>
                                         <select id="systemPromptMode" class="form-control">
-                                            <option value="append" selected>追加 (append)</option>
-                                            <option value="overwrite">覆盖 (overwrite)</option>
+                                            <option value="append" selected>Append</option>
+                                            <option value="overwrite">Overwrite</option>
                                         </select>
                                     </div>
                                 </div>
                                 
                                 <div class="config-row">
                                     <div class="form-group">
-                                        <label for="promptLogBaseName">提示日志基础名称</label>
-                                        <input type="text" id="promptLogBaseName" class="form-control" placeholder="例如: prompt_log">
+                                        <label for="promptLogBaseName">Prompt log base name</label>
+                                        <input type="text" id="promptLogBaseName" class="form-control" placeholder="e.g. prompt_log">
                                     </div>
                                     <div class="form-group">
-                                        <label for="promptLogMode">提示日志模式</label>
+                                        <label for="promptLogMode">Prompt log mode</label>
                                         <select id="promptLogMode" class="form-control">
-                                            <option value="none">无 (none)</option>
-                                            <option value="console">控制台 (console)</option>
-                                            <option value="file">文件 (file)</option>
+                                            <option value="none">None</option>
+                                            <option value="console">Console</option>
+                                            <option value="file">File</option>
                                         </select>
                                     </div>
                                 </div>
                                 
                                 <div class="config-row">
                                     <div class="form-group">
-                                        <label for="requestMaxRetries">最大重试次数</label>
+                                        <label for="requestMaxRetries">Max retries</label>
                                         <input type="number" id="requestMaxRetries" class="form-control" min="0" max="10" value="3">
                                     </div>
                                     <div class="form-group">
-                                        <label for="requestBaseDelay">重试基础延迟(毫秒)</label>
+                                        <label for="requestBaseDelay">Base retry delay (ms)</label>
                                         <input type="number" id="requestBaseDelay" class="form-control" min="0" step="100" value="1000">
                                     </div>
                                 </div>
                                 
                                 <div class="config-row">
                                     <div class="form-group">
-                                        <label for="cronNearMinutes">OAuth令牌刷新间隔(分钟)</label>
+                                        <label for="cronNearMinutes">OAuth refresh interval (minutes)</label>
                                         <input type="number" id="cronNearMinutes" class="form-control" min="1" max="60" value="1">
                                     </div>
                                     <div class="form-group">
-                                        <label for="cronNearMinutes">启用OAuth令牌自动刷新(需重启服务)</label>
+                                        <label for="cronNearMinutes">Enable OAuth auto-refresh (requires restart)</label>
                                         <label class="toggle-switch">
                                             <input type="checkbox" id="cronRefreshToken">
                                             <span class="toggle-slider"></span>
@@ -695,42 +695,42 @@
                                 </div>
                                 
                                 <div class="form-group pool-section">
-                                    <label for="providerPoolsFilePath">提供商池配置文件路径(不能为空)</label>
-                                    <input type="text" id="providerPoolsFilePath" class="form-control" value="" placeholder="默认: provider_pools.json">
-                                    <small class="form-text">配置了提供商池后，默认使用提供商池的配置，提供商池配置失效降级到默认配置</small>
+                                    <label for="providerPoolsFilePath">Provider pools file path (required)</label>
+                                    <input type="text" id="providerPoolsFilePath" class="form-control" value="" placeholder="Default: provider_pools.json">
+                                    <small class="form-text">If provider pools are configured, the pool settings are used by default. If pools are invalid, it falls back to the default config.</small>
                                 </div>
                                 
                                 <div class="form-group pool-section">
-                                    <label for="maxErrorCount">提供商最大错误次数</label>
-                                    <input type="number" id="maxErrorCount" class="form-control" value="3" min="1" max="10" placeholder="默认: 3">
-                                    <small class="form-text">提供商连续错误达到此次数后将被标记为不健康，默认为 3 次</small>
+                                    <label for="maxErrorCount">Max provider error count</label>
+                                    <input type="number" id="maxErrorCount" class="form-control" value="3" min="1" max="10" placeholder="Default: 3">
+                                    <small class="form-text">After this many consecutive errors, a provider will be marked unhealthy (default: 3)</small>
                                 </div>
                                 
-                                <!-- 系统提示配置移到最下面 -->
+                                <!-- System prompt config moved to bottom -->
                                 <div class="form-group system-prompt-section">
-                                    <label for="systemPrompt">系统提示</label>
-                                    <textarea id="systemPrompt" class="form-control" rows="4" placeholder="输入系统提示..."></textarea>
+                                    <label for="systemPrompt">System prompt</label>
+                                    <textarea id="systemPrompt" class="form-control" rows="4" placeholder="Enter system prompt..."></textarea>
                                 </div>
                                 
-                                <!-- 后台登录密码配置 -->
+                                <!-- Admin login password config -->
                                 <div class="form-group pool-section">
-                                    <label for="adminPassword">后台登录密码</label>
+                                    <label for="adminPassword">Admin password</label>
                                     <div class="password-input-wrapper">
-                                        <input type="password" id="adminPassword" class="form-control" placeholder="设置后台登录密码（留空则不修改）" autocomplete="new-password">
-                                        <button type="button" class="password-toggle" data-target="adminPassword" aria-label="显示/隐藏密码">
+                                        <input type="password" id="adminPassword" class="form-control" placeholder="Set admin password (leave empty to keep unchanged)" autocomplete="new-password">
+                                        <button type="button" class="password-toggle" data-target="adminPassword" aria-label="Show/hide password">
                                             <i class="fas fa-eye" aria-hidden="true"></i>
                                         </button>
                                     </div>
-                                    <small class="form-text">用于保护管理控制台的访问，修改后需要重新登录</small>
+                                    <small class="form-text">Protects access to the management console. After change, you need to log in again.</small>
                                 </div>
                             </div>
                             
                             <div class="form-actions">
                                 <button class="btn btn-success" id="saveConfig">
-                                    <i class="fas fa-save"></i> 保存配置
+                                    <i class="fas fa-save"></i> Save
                                 </button>
                                 <button class="btn btn-secondary" id="resetConfig">
-                                    <i class="fas fa-undo"></i> 重置
+                                    <i class="fas fa-undo"></i> Reset
                                 </button>
                             </div>
                         </div>
@@ -739,54 +739,54 @@
 
                 <!-- Upload Configuration Section -->
                 <section id="upload-config" class="section" aria-labelledby="upload-config-title">
-                    <h2 id="upload-config-title">上传配置管理</h2>
+                    <h2 id="upload-config-title">Upload Configs</h2>
                     <div class="upload-config-panel">
-                        <!-- 搜索和过滤区域 -->
+                        <!-- Search and filter area -->
                         <div class="config-search-panel">
                             <div class="search-controls">
                                 <div class="form-group">
-                                    <label for="configSearch">搜索配置</label>
+                                    <label for="configSearch">Search configs</label>
                                     <div class="search-input-group">
-                                        <input type="text" id="configSearch" class="form-control" placeholder="输入文件名">
-                                        <button type="button" class="btn btn-outline" id="searchConfigBtn" aria-label="搜索配置">
+                                        <input type="text" id="configSearch" class="form-control" placeholder="Enter filename">
+                                        <button type="button" class="btn btn-outline" id="searchConfigBtn" aria-label="Search configs">
                                             <i class="fas fa-search"></i>
                                         </button>
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="configStatusFilter">关联状态</label>
+                                    <label for="configStatusFilter">Link status</label>
                                     <select id="configStatusFilter" class="form-control">
-                                        <option value="">全部状态</option>
-                                        <option value="used">已关联</option>
-                                        <option value="unused">未关联</option>
+                                        <option value="">All</option>
+                                        <option value="used">Linked</option>
+                                        <option value="unused">Not linked</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label>&nbsp;</label>
                                     <div class="config-actions">
-                                        <button class="btn btn-primary" id="refreshConfigList" aria-label="刷新配置列表">
-                                            <i class="fas fa-sync-alt"></i> 刷新
+                                        <button class="btn btn-primary" id="refreshConfigList" aria-label="Refresh config list">
+                                            <i class="fas fa-sync-alt"></i> Refresh
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 配置列表 -->
+                        <!-- Config list -->
                         <div class="config-list-container">
                             <div class="config-list-header">
-                                <h3>配置文件列表</h3>
+                                <h3>Config files</h3>
                                 <div class="config-stats">
-                                    <span id="configCount">共 0 个配置文件</span>
-                                    <span id="usedConfigCount" class="status-used">已关联: 0</span>
-                                    <span id="unusedConfigCount" class="status-unused">未关联: 0</span>
-                                    <button id="batchLinkKiroBtn" class="btn-batch-link-kiro" title="批量关联 configs/ 下的未关联配置">
-                                        <i class="fas fa-link"></i> 自动关联oauth
+                                    <span id="configCount">Total: 0</span>
+                                    <span id="usedConfigCount" class="status-used">Linked: 0</span>
+                                    <span id="unusedConfigCount" class="status-unused">Not linked: 0</span>
+                                    <button id="batchLinkKiroBtn" class="btn-batch-link-kiro" title="Auto-link unlinked configs under configs/">
+                                        <i class="fas fa-link"></i> Auto-link OAuth
                                     </button>
                                 </div>
                             </div>
                             <div id="configList" class="config-list">
-                                <!-- 配置文件列表将在这里动态生成 -->
+                                <!-- Config file list will be dynamically generated here -->
                             </div>
                         </div>
                     </div>
@@ -794,11 +794,11 @@
 
                 <!-- Provider Pools Section -->
                 <section id="providers" class="section" aria-labelledby="providers-title">
-                    <h2 id="providers-title">提供商池管理</h2>
+                    <h2 id="providers-title">Provider Pools</h2>
                     <div class="pool-description">
                         <div class="highlight-note">
                             <i class="fas fa-info-circle"></i>
-                            <span>配置了提供商池后，默认使用提供商池的配置，提供商池配置失效降级到默认配置</span>
+                            <span>If provider pools are configured, pools are used by default. If pools are invalid, it falls back to the default config.</span>
                         </div>
                     </div>
                     <!-- Provider Pool Stats -->
@@ -809,7 +809,7 @@
                             </div>
                             <div class="stat-info">
                                 <h3 id="activeConnections">0</h3>
-                                <p>活动连接</p>
+                                <p>Active connections</p>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -818,7 +818,7 @@
                             </div>
                             <div class="stat-info">
                                 <h3 id="activeProviders">0</h3>
-                                <p>活跃提供商</p>
+                                <p>Active providers</p>
                             </div>
                         </div>
                         <div class="stat-card">
@@ -827,7 +827,7 @@
                             </div>
                             <div class="stat-info">
                                 <h3 id="healthyProviders">0</h3>
-                                <p>健康提供商</p>
+                                <p>Healthy providers</p>
                             </div>
                         </div>
                     </div>
@@ -840,13 +840,13 @@
 
                 <!-- Logs Section -->
                 <section id="logs" class="section" aria-labelledby="logs-title">
-                    <h2 id="logs-title">实时日志</h2>
+                    <h2 id="logs-title">Logs</h2>
                     <div class="logs-controls">
-                        <button class="btn btn-danger" id="clearLogs" aria-label="清空所有日志">
-                            <i class="fas fa-trash" aria-hidden="true"></i> <span>清空日志</span>
+                        <button class="btn btn-danger" id="clearLogs" aria-label="Clear all logs">
+                            <i class="fas fa-trash" aria-hidden="true"></i> <span>Clear logs</span>
                         </button>
-                        <button class="btn btn-primary" id="toggleAutoScroll" data-enabled="true" aria-label="切换自动滚动">
-                            <i class="fas fa-arrow-down" aria-hidden="true"></i> <span>自动滚动: 开</span>
+                        <button class="btn btn-primary" id="toggleAutoScroll" data-enabled="true" aria-label="Toggle auto-scroll">
+                            <i class="fas fa-arrow-down" aria-hidden="true"></i> <span>Auto-scroll: On</span>
                         </button>
                     </div>
                     <div class="logs-container" id="logsContainer" role="log" aria-live="polite" aria-atomic="false">
@@ -864,55 +864,53 @@
     <!-- Scripts -->
     <script src="app/auth.js"></script>
     <script>
-        // 页面加载时检查登录状态
+        // Check login status on page load
         (async function() {
             const isAuthenticated = await initAuth();
             if (!isAuthenticated) {
-                // 如果未认证，initAuth会自动重定向到登录页面
+                // If not authenticated, initAuth will automatically redirect to login page
                 return;
             }
-            // 认证成功，继续加载页面
-            console.log('用户已认证');
+            // Authentication successful, continue loading page
+            console.log('User authenticated');
             
-            // 显示登出按钮（如果配置了密码保护）
+            // Show logout button (if password protection is configured)
             const logoutBtn = document.getElementById('logoutBtn');
             if (logoutBtn && localStorage.getItem('authToken')) {
                 logoutBtn.style.display = 'inline-block';
                 logoutBtn.addEventListener('click', async () => {
-                    if (confirm('确定要登出吗？')) {
+                    if (confirm('Are you sure you want to log out?')) {
                         await logout();
                     }
                 });
             }
 
-            // 更新路径路由示例中的URL前缀
+            // Update URL prefix in routing examples
             updateRoutingExamplesURLs();
         })();
 
-        // 更新路径路由示例中的URL前缀
+        // Update URL prefix in routing examples
         function updateRoutingExamplesURLs() {
-            // 获取当前页面的基础URL（去掉index.html）
-            const currentURL = window.location.href;
-            const baseURL = currentURL.replace(/\/index\.html$/, '');
+            // Base URL of current page
+            const baseURL = window.location.origin;
+            const cleanBaseURL = baseURL.replace(/\/$/, '');
             
-            // 更新所有端点路径
+            // Update all endpoint paths
             const endpointPaths = document.querySelectorAll('.endpoint-path');
             endpointPaths.forEach(element => {
                 const originalPath = element.textContent;
                 if (!originalPath.startsWith(baseURL)) {
-                    // 确保baseURL不以斜杠结尾，然后正确拼接路径
-                    const cleanBaseURL = baseURL.replace(/\/$/, '');
                     const cleanPath = originalPath.startsWith('/') ? originalPath : '/' + originalPath;
                     element.textContent = cleanBaseURL + cleanPath;
                 }
             });
 
-            // 更新curl命令中的URL
+            // Update URLs in curl commands
             const curlCodes = document.querySelectorAll('.usage-example pre code');
             curlCodes.forEach(element => {
                 const curlCommand = element.textContent;
-                // 替换curl命令中的http://localhost:3000部分
-                const updatedCommand = curlCommand.replace(/curl http:\/\/localhost:3000/g, `curl ${baseURL}`);
+                // Replace curl URL prefix (http://localhost:3000)
+                const updatedCommand = curlCommand.replace(/curl http:\/\/localhost:3000/g, `curl ${cleanBaseURL}`);
                 element.textContent = updatedCommand;
             });
         }

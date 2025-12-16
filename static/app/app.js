@@ -1,6 +1,6 @@
-// 主应用入口文件 - 模块化版本
+// Main application entry file - modular version
 
-// 导入所有模块
+// Import all modules
 import {
     providerStats,
     REFRESH_INTERVALS
@@ -64,79 +64,79 @@ import {
 } from './upload-config-manager.js';
 
 /**
- * 加载初始数据
+ * Load initial data
  */
 function loadInitialData() {
     loadSystemInfo();
     loadProviders();
     loadConfiguration();
-    // showToast('数据已刷新', 'success');
+    // showToast('Data refreshed', 'success');
 }
 
 /**
- * 初始化应用
+ * Initialize application
  */
 function initApp() {
-    // 设置数据加载器
+    // Set data loaders
     setDataLoaders(loadInitialData, saveConfiguration);
     
-    // 设置reloadConfig函数
+    // Set reloadConfig function
     setReloadConfig(reloadConfig);
     
-    // 设置提供商加载器
+    // Set provider loaders
     setProviderLoaders(loadProviders, refreshProviderConfig);
     
-    // 设置配置加载器
+    // Set config loaders
     setConfigLoaders(loadConfigList);
     
-    // 初始化各个模块
+    // Initialize all modules
     initNavigation();
     initEventListeners();
     initEventStream();
-    initFileUpload(); // 初始化文件上传功能
-    initRoutingExamples(); // 初始化路径路由示例功能
-    initUploadConfigManager(); // 初始化上传配置管理功能
+    initFileUpload(); // Initialize file upload functionality
+    initRoutingExamples(); // Initialize routing examples functionality
+    initUploadConfigManager(); // Initialize upload config manager functionality
     loadInitialData();
     
-    // 显示欢迎消息
-    showToast('欢迎使用AIClent2API管理控制台！', 'success');
+    // Show welcome message
+    showToast('Welcome to the AIClient2API Management Console!', 'success');
     
-    // 每5秒更新服务器时间和运行时间显示
+    // Update server time and uptime display every 5 seconds
     setInterval(() => {
         updateTimeDisplay();
     }, 5000);
     
-    // 定期刷新系统信息
+    // Periodically refresh system info
     setInterval(() => {
         loadProviders();
 
         if (providerStats.activeProviders > 0) {
             const stats = getProviderStats(providerStats);
-            console.log('=== 提供商统计报告 ===');
-            console.log(`活跃提供商: ${stats.activeProviders}`);
-            console.log(`健康提供商: ${stats.healthyProviders} (${stats.healthRatio})`);
-            console.log(`总账户数: ${stats.totalAccounts}`);
-            console.log(`总请求数: ${stats.totalRequests}`);
-            console.log(`总错误数: ${stats.totalErrors}`);
-            console.log(`成功率: ${stats.successRate}`);
-            console.log(`平均每提供商请求数: ${stats.avgUsagePerProvider}`);
-            console.log('========================');
+            console.log('=== Provider Stats Report ===');
+            console.log(`Active providers: ${stats.activeProviders}`);
+            console.log(`Healthy providers: ${stats.healthyProviders} (${stats.healthRatio})`);
+            console.log(`Total accounts: ${stats.totalAccounts}`);
+            console.log(`Total requests: ${stats.totalRequests}`);
+            console.log(`Total errors: ${stats.totalErrors}`);
+            console.log(`Success rate: ${stats.successRate}`);
+            console.log(`Avg requests per provider: ${stats.avgUsagePerProvider}`);
+            console.log('=============================');
         }
     }, REFRESH_INTERVALS.SYSTEM_INFO);
 
 }
 
-// DOM加载完成后初始化应用
+// Initialize application after DOM is loaded
 document.addEventListener('DOMContentLoaded', initApp);
 
-// 导出全局函数供其他模块使用
+// Export global functions for use by other modules
 window.loadProviders = loadProviders;
 window.openProviderManager = openProviderManager;
 window.showProviderManagerModal = showProviderManagerModal;
 window.refreshProviderConfig = refreshProviderConfig;
 window.fileUploadHandler = fileUploadHandler;
 
-// 上传配置管理相关全局函数
+// Upload config management related global functions
 window.viewConfig = viewConfig;
 window.deleteConfig = deleteConfig;
 window.loadConfigList = loadConfigList;
@@ -144,7 +144,7 @@ window.closeConfigModal = closeConfigModal;
 window.copyConfigContent = copyConfigContent;
 window.reloadConfig = reloadConfig;
 
-// 导出调试函数
+// Export debug functions
 window.getProviderStats = () => getProviderStats(providerStats);
 
-console.log('AIClient2API 管理控制台已加载 - 模块化版本');
+console.log('AIClient2API Management Console loaded (modular)');

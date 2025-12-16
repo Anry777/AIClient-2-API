@@ -1,12 +1,12 @@
-// 路径路由示例功能模块
+// Routing examples functionality module
 
 import { showToast } from './utils.js';
 
 /**
- * 初始化路径路由示例功能
+ * Initialize routing examples functionality
  */
 function initRoutingExamples() {
-    // 延迟初始化，确保所有DOM都加载完成
+    // Delayed initialization to ensure all DOM is loaded
     setTimeout(() => {
         initProtocolTabs();
         initCopyButtons();
@@ -15,12 +15,12 @@ function initRoutingExamples() {
 }
 
 /**
- * 初始化协议标签切换功能
+ * Initialize protocol tab switching functionality
  */
 function initProtocolTabs() {
-    // 使用事件委托方式绑定点击事件
+    // Use event delegation to bind click events
     document.addEventListener('click', function(e) {
-        // 检查点击的是不是协议标签或者其子元素
+        // Check if clicked element is a protocol tab or its child
         const tab = e.target.classList.contains('protocol-tab') ? e.target : e.target.closest('.protocol-tab');
         
         if (tab) {
@@ -34,17 +34,17 @@ function initProtocolTabs() {
                 return;
             }
             
-            // 移除当前卡片中所有标签和内容的活动状态
+            // Remove active state from all tabs and content in current card
             const cardTabs = card.querySelectorAll('.protocol-tab');
             const cardContents = card.querySelectorAll('.protocol-content');
             
             cardTabs.forEach(t => t.classList.remove('active'));
             cardContents.forEach(c => c.classList.remove('active'));
             
-            // 为当前标签和对应内容添加活动状态
+            // Add active state to current tab and corresponding content
             tab.classList.add('active');
             
-            // 使用更精确的选择器来查找对应的内容
+            // Use more precise selector to find corresponding content
             const targetContent = card.querySelector(`.protocol-content[data-protocol="${targetProtocol}"]`);
             if (targetContent) {
                 targetContent.classList.add('active');
@@ -54,7 +54,7 @@ function initProtocolTabs() {
 }
 
 /**
- * 初始化复制按钮功能
+ * Initialize copy button functionality
  */
 function initCopyButtons() {
     document.addEventListener('click', async function(e) {
@@ -67,9 +67,9 @@ function initCopyButtons() {
             
             try {
                 await navigator.clipboard.writeText(path);
-                showToast(`路径已复制: ${path}`, 'success');
+                showToast(`Copied path: ${path}`, 'success');
                 
-                // 临时更改按钮图标
+                // Temporarily change button icon
                 const icon = button.querySelector('i');
                 if (icon) {
                     const originalClass = icon.className;
@@ -84,20 +84,20 @@ function initCopyButtons() {
                 
             } catch (error) {
                 console.error('Failed to copy to clipboard:', error);
-                showToast('复制失败', 'error');
+                showToast('Copy failed', 'error');
             }
         }
     });
 }
 
 /**
- * 初始化卡片交互功能
+ * Initialize card interaction functionality
  */
 function initCardInteractions() {
     const routingCards = document.querySelectorAll('.routing-example-card');
     
     routingCards.forEach(card => {
-        // 添加悬停效果
+        // Add hover effect
         card.addEventListener('mouseenter', () => {
             card.style.transform = 'translateY(-4px)';
             card.style.boxShadow = 'var(--shadow-lg)';
@@ -112,8 +112,8 @@ function initCardInteractions() {
 }
 
 /**
- * 获取所有可用的路由端点
- * @returns {Array} 路由端点数组
+ * Get all available route endpoints
+ * @returns {Array} Route endpoints array
  */
 function getAvailableRoutes() {
     return [
@@ -124,8 +124,8 @@ function getAvailableRoutes() {
                 openai: '/claude-custom/v1/chat/completions',
                 claude: '/claude-custom/v1/messages'
             },
-            description: '官方Claude API',
-            badge: '官方API',
+            description: 'Official Claude API',
+            badge: 'Official',
             badgeClass: 'official'
         },
         {
@@ -135,8 +135,8 @@ function getAvailableRoutes() {
                 openai: '/claude-kiro-oauth/v1/chat/completions',
                 claude: '/claude-kiro-oauth/v1/messages'
             },
-            description: '免费使用Claude Sonnet 4.5',
-            badge: '免费使用',
+            description: 'Free access to Claude Sonnet 4.5',
+            badge: 'Free',
             badgeClass: 'oauth'
         },
         {
@@ -146,8 +146,8 @@ function getAvailableRoutes() {
                 openai: '/openai-custom/v1/chat/completions',
                 claude: '/openai-custom/v1/messages'
             },
-            description: '官方OpenAI API',
-            badge: '官方API',
+            description: 'Official OpenAI API',
+            badge: 'Official',
             badgeClass: 'official'
         },
         {
@@ -157,8 +157,8 @@ function getAvailableRoutes() {
                 openai: '/gemini-cli-oauth/v1/chat/completions',
                 claude: '/gemini-cli-oauth/v1/messages'
             },
-            description: '突破Gemini免费限制',
-            badge: '突破限制',
+            description: 'Bypass Gemini free limits',
+            badge: 'Bypass limits',
             badgeClass: 'oauth'
         },
         {
@@ -169,7 +169,7 @@ function getAvailableRoutes() {
                 claude: '/openai-qwen-oauth/v1/messages'
             },
             description: 'Qwen Code Plus',
-            badge: '代码专用',
+            badge: 'Code',
             badgeClass: 'oauth'
         },
         {
@@ -179,16 +179,16 @@ function getAvailableRoutes() {
                 openai: '/openaiResponses-custom/v1/responses',
                 claude: '/openaiResponses-custom/v1/messages'
             },
-            description: '结构化对话API',
-            badge: '结构化对话',
+            description: 'Structured conversation API',
+            badge: 'Structured',
             badgeClass: 'responses'
         }
     ];
 }
 
 /**
- * 高亮显示特定提供商路由
- * @param {string} provider - 提供商标识
+ * Highlight specific provider route
+ * @param {string} provider - Provider identifier
  */
 function highlightProviderRoute(provider) {
     const card = document.querySelector(`[data-provider="${provider}"]`);
@@ -202,21 +202,21 @@ function highlightProviderRoute(provider) {
             card.style.boxShadow = '';
         }, 3000);
         
-        showToast(`已定位到: ${provider}`, 'success');
+        showToast(`Focused: ${provider}`, 'success');
     }
 }
 
 /**
- * 复制curl命令示例
- * @param {string} provider - 提供商标识
- * @param {Object} options - 选项参数
+ * Copy cURL command example
+ * @param {string} provider - Provider identifier
+ * @param {Object} options - Options parameters
  */
 async function copyCurlExample(provider, options = {}) {
     const routes = getAvailableRoutes();
     const route = routes.find(r => r.provider === provider);
     
     if (!route) {
-        showToast('未找到对应的路由', 'error');
+        showToast('Route not found', 'error');
         return;
     }
     
@@ -224,18 +224,20 @@ async function copyCurlExample(provider, options = {}) {
     const path = route.paths[protocol];
     
     if (!path) {
-        showToast('未找到对应的协议路径', 'error');
+        showToast('Protocol path not found', 'error');
         return;
     }
+
+    const baseURL = window.location.origin;
     
     let curlCommand = '';
     
-    // 根据不同提供商和协议生成对应的curl命令
+    // Generate corresponding cURL command based on different providers and protocols
     switch (provider) {
         case 'claude-custom':
         case 'claude-kiro-oauth':
             if (protocol === 'openai') {
-                curlCommand = `curl http://localhost:3000${path} \\
+                curlCommand = `curl ${baseURL}${path} \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -d '{
@@ -244,7 +246,7 @@ async function copyCurlExample(provider, options = {}) {
     "max_tokens": 1000
   }'`;
             } else {
-                curlCommand = `curl http://localhost:3000${path} \\
+                curlCommand = `curl ${baseURL}${path} \\
   -H "Content-Type: application/json" \\
   -d '{
     "model": "${model}",
@@ -257,7 +259,7 @@ async function copyCurlExample(provider, options = {}) {
         case 'openai-custom':
         case 'openai-qwen-oauth':
             if (protocol === 'openai') {
-                curlCommand = `curl http://localhost:3000${path} \\
+                curlCommand = `curl ${baseURL}${path} \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -d '{
@@ -266,7 +268,7 @@ async function copyCurlExample(provider, options = {}) {
     "max_tokens": 1000
   }'`;
             } else {
-                curlCommand = `curl http://localhost:3000${path} \\
+                curlCommand = `curl ${baseURL}${path} \\
   -H "Content-Type: application/json" \\
   -H "X-API-Key: YOUR_API_KEY" \\
   -d '{
@@ -279,7 +281,7 @@ async function copyCurlExample(provider, options = {}) {
             
         case 'gemini-cli-oauth':
             if (protocol === 'openai') {
-                curlCommand = `curl http://localhost:3000${path} \\
+                curlCommand = `curl ${baseURL}${path} \\
   -H "Content-Type: application/json" \\
   -d '{
     "model": "gemini-2.0-flash-exp",
@@ -287,7 +289,7 @@ async function copyCurlExample(provider, options = {}) {
     "max_tokens": 1000
   }'`;
             } else {
-                curlCommand = `curl http://localhost:3000${path} \\
+                curlCommand = `curl ${baseURL}${path} \\
   -H "Content-Type: application/json" \\
   -d '{
     "model": "gemini-2.0-flash-exp",
@@ -299,7 +301,7 @@ async function copyCurlExample(provider, options = {}) {
             
         case 'openaiResponses-custom':
             if (protocol === 'openai') {
-                curlCommand = `curl http://localhost:3000${path} \\
+                curlCommand = `curl ${baseURL}${path} \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -d '{
@@ -308,7 +310,7 @@ async function copyCurlExample(provider, options = {}) {
     "max_output_tokens": 1000
   }'`;
             } else {
-                curlCommand = `curl http://localhost:3000${path} \\
+                curlCommand = `curl ${baseURL}${path} \\
   -H "Content-Type: application/json" \\
   -H "X-API-Key: YOUR_API_KEY" \\
   -d '{
@@ -322,10 +324,10 @@ async function copyCurlExample(provider, options = {}) {
     
     try {
         await navigator.clipboard.writeText(curlCommand);
-        showToast('curl命令已复制到剪贴板', 'success');
+        showToast('cURL command copied to clipboard', 'success');
     } catch (error) {
         console.error('Failed to copy curl command:', error);
-        showToast('复制失败', 'error');
+        showToast('Copy failed', 'error');
     }
 }
 

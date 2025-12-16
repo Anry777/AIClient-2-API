@@ -1,17 +1,17 @@
-// 配置管理模块
+// Configuration management module
 
 import { showToast, formatUptime } from './utils.js';
 import { handleProviderChange, handleGeminiCredsTypeChange, handleKiroCredsTypeChange } from './event-handlers.js';
 import { loadProviders } from './provider-manager.js';
 
 /**
- * 加载配置
+ * Load configuration
  */
 async function loadConfiguration() {
     try {
         const data = await window.apiClient.get('/config');
 
-        // 基础配置
+        // Basic configuration
         const apiKeyEl = document.getElementById('apiKey');
         const hostEl = document.getElementById('host');
         const portEl = document.getElementById('port');
@@ -65,7 +65,7 @@ async function loadConfiguration() {
         if (openaiResponsesApiKeyEl) openaiResponsesApiKeyEl.value = data.OPENAI_API_KEY || '';
         if (openaiResponsesBaseUrlEl) openaiResponsesBaseUrlEl.value = data.OPENAI_BASE_URL || 'https://api.openai.com/v1';
 
-        // 高级配置参数
+        // Advanced configuration parameters
         const systemPromptFilePathEl = document.getElementById('systemPromptFilePath');
         const systemPromptModeEl = document.getElementById('systemPromptMode');
         const promptLogBaseNameEl = document.getElementById('promptLogBaseName');
@@ -88,10 +88,10 @@ async function loadConfiguration() {
         if (providerPoolsFilePathEl) providerPoolsFilePathEl.value = data.PROVIDER_POOLS_FILE_PATH;
         if (maxErrorCountEl) maxErrorCountEl.value = data.MAX_ERROR_COUNT || 3;
 
-        // 触发提供商配置显示
+        // Trigger provider config display
         handleProviderChange();
         
-        // 根据Gemini凭据类型设置显示
+        // Set display based on Gemini credentials type
         const geminiCredsType = data.GEMINI_OAUTH_CREDS_BASE64 ? 'base64' : 'file';
         const geminiRadio = document.querySelector(`input[name="geminiCredsType"][value="${geminiCredsType}"]`);
         if (geminiRadio) {
@@ -99,7 +99,7 @@ async function loadConfiguration() {
             handleGeminiCredsTypeChange({ target: geminiRadio });
         }
         
-        // 根据Kiro凭据类型设置显示
+        // Set display based on Kiro credentials type
         const kiroCredsType = data.KIRO_OAUTH_CREDS_BASE64 ? 'base64' : 'file';
         const kiroRadio = document.querySelector(`input[name="kiroCredsType"][value="${kiroCredsType}"]`);
         if (kiroRadio) {
@@ -107,7 +107,7 @@ async function loadConfiguration() {
             handleKiroCredsTypeChange({ target: kiroRadio });
         }
         
-        // 检查并设置提供商池菜单显示状态
+        // Check and set provider pools menu display status
         // const providerPoolsFilePath = data.PROVIDER_POOLS_FILE_PATH;
         // const providersMenuItem = document.querySelector('.nav-item[data-section="providers"]');
         // if (providerPoolsFilePath && providerPoolsFilePath.trim() !== '') {
@@ -122,7 +122,7 @@ async function loadConfiguration() {
 }
 
 /**
- * 保存配置
+ * Save configuration
  */
 async function saveConfiguration() {
     const config = {
@@ -133,10 +133,10 @@ async function saveConfiguration() {
         systemPrompt: document.getElementById('systemPrompt')?.value || '',
     };
 
-    // 获取后台登录密码（如果有输入）
+    // Get admin login password (if entered)
     const adminPassword = document.getElementById('adminPassword')?.value || '';
 
-    // 根据不同提供商保存不同的配置
+    // Save different configs based on provider
     const provider = document.getElementById('modelProvider')?.value;
     
     switch (provider) {
@@ -183,7 +183,7 @@ async function saveConfiguration() {
             break;
     }
 
-    // 保存高级配置参数
+    // Save advanced configuration parameters
     config.SYSTEM_PROMPT_FILE_PATH = document.getElementById('systemPromptFilePath')?.value || 'input_system_prompt.txt';
     config.SYSTEM_PROMPT_MODE = document.getElementById('systemPromptMode')?.value || 'append';
     config.PROMPT_LOG_BASE_NAME = document.getElementById('promptLogBaseName')?.value || '';
@@ -198,33 +198,33 @@ async function saveConfiguration() {
     try {
         await window.apiClient.post('/config', config);
         
-        // 如果输入了新密码，单独保存密码
+        // If new password entered, save it separately
         if (adminPassword) {
             try {
                 await window.apiClient.post('/admin-password', { password: adminPassword });
-                // 清空密码输入框
+                // Clear password input
                 const adminPasswordEl = document.getElementById('adminPassword');
                 if (adminPasswordEl) adminPasswordEl.value = '';
-                showToast('后台密码已更新，下次登录生效', 'success');
+                showToast('Admin password updated. It will take effect on next login.', 'success');
             } catch (pwdError) {
                 console.error('Failed to save admin password:', pwdError);
-                showToast('保存后台密码失败: ' + pwdError.message, 'error');
+                showToast('Failed to save admin password: ' + pwdError.message, 'error');
             }
         }
         
         await window.apiClient.post('/reload-config');
-        showToast('配置已保存', 'success');
+        showToast('Configuration saved', 'success');
         
-        // 检查当前是否在提供商池管理页面，如果是则刷新数据
+        // Check if currently on provider pools page, if so refresh data
         const providersSection = document.getElementById('providers');
         if (providersSection && providersSection.classList.contains('active')) {
-            // 当前在提供商池页面，刷新数据
+            // Currently on provider pools page, refresh data
             await loadProviders();
-            showToast('提供商池数据已刷新', 'success');
+            showToast('Provider pools refreshed', 'success');
         }
     } catch (error) {
         console.error('Failed to save configuration:', error);
-        showToast('保存配置失败: ' + error.message, 'error');
+        showToast('Failed to save configuration: ' + error.message, 'error');
     }
 }
 

@@ -1,13 +1,13 @@
-// 导航功能模块
+// Navigation functionality module
 
 import { elements } from './constants.js';
 
 /**
- * 初始化导航功能
+ * Initialize navigation functionality
  */
 function initNavigation() {
     if (!elements.navItems || !elements.sections) {
-        console.warn('导航元素未找到');
+        console.warn('Navigation elements not found');
         return;
     }
 
@@ -16,11 +16,11 @@ function initNavigation() {
             e.preventDefault();
             const sectionId = item.dataset.section;
 
-            // 更新导航状态
+            // Update navigation state
             elements.navItems.forEach(nav => nav.classList.remove('active'));
             item.classList.add('active');
 
-            // 显示对应章节
+            // Show corresponding section
             elements.sections.forEach(section => {
                 section.classList.remove('active');
                 if (section.id === sectionId) {
@@ -32,11 +32,11 @@ function initNavigation() {
 }
 
 /**
- * 切换到指定章节
- * @param {string} sectionId - 章节ID
+ * Switch to specified section
+ * @param {string} sectionId - Section ID
  */
 function switchToSection(sectionId) {
-    // 更新导航状态
+    // Update navigation state
     elements.navItems.forEach(nav => {
         nav.classList.remove('active');
         if (nav.dataset.section === sectionId) {
@@ -44,7 +44,7 @@ function switchToSection(sectionId) {
         }
     });
 
-    // 显示对应章节
+    // Show corresponding section
     elements.sections.forEach(section => {
         section.classList.remove('active');
         if (section.id === sectionId) {
@@ -54,14 +54,14 @@ function switchToSection(sectionId) {
 }
 
 /**
- * 切换到仪表盘页面
+ * Switch to dashboard page
  */
 function switchToDashboard() {
     switchToSection('dashboard');
 }
 
 /**
- * 切换到提供商页面
+ * Switch to providers page
  */
 function switchToProviders() {
     switchToSection('providers');

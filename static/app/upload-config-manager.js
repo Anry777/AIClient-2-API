@@ -1,30 +1,30 @@
-// 上传配置管理功能模块
+// Upload configuration management module
 
 import { showToast } from './utils.js';
 
-let allConfigs = []; // 存储所有配置数据
-let filteredConfigs = []; // 存储过滤后的配置数据
-let isLoadingConfigs = false; // 防止重复加载配置
+let allConfigs = []; // Store all config data
+let filteredConfigs = []; // Store filtered config data
+let isLoadingConfigs = false; // Prevent duplicate config loading
 
 /**
- * 搜索配置
- * @param {string} searchTerm - 搜索关键词
- * @param {string} statusFilter - 状态过滤
+ * Search configurations
+ * @param {string} searchTerm - Search keyword
+ * @param {string} statusFilter - Status filter
  */
 function searchConfigs(searchTerm = '', statusFilter = '') {
     if (!allConfigs.length) {
-        console.log('没有配置数据可搜索');
+        console.log('No config data to search');
         return;
     }
 
     filteredConfigs = allConfigs.filter(config => {
-        // 搜索过滤
+        // Search filter
         const matchesSearch = !searchTerm ||
             config.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             config.path.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (config.content && config.content.toLowerCase().includes(searchTerm.toLowerCase()));
 
-        // 状态过滤 - 从布尔值 isUsed 转换为状态字符串
+        // Status filter - convert boolean isUsed to status string
         const configStatus = config.isUsed ? 'used' : 'unused';
         const matchesStatus = !statusFilter || configStatus === statusFilter;
 
@@ -36,7 +36,7 @@ function searchConfigs(searchTerm = '', statusFilter = '') {
 }
 
 /**
- * 渲染配置列表
+ * Render configuration list
  */
 function renderConfigList() {
     const container = document.getElementById('configList');
@@ -45,7 +45,7 @@ function renderConfigList() {
     container.innerHTML = '';
 
     if (!filteredConfigs.length) {
-        container.innerHTML = '<div class="no-configs"><p>未找到匹配的配置文件</p></div>';
+        container.innerHTML = '<div class="no-configs"><p>No matching configuration files found</p></div>';
         return;
     }
 
@@ -56,34 +56,34 @@ function renderConfigList() {
 }
 
 /**
- * 创建配置项元素
- * @param {Object} config - 配置数据
- * @param {number} index - 索引
- * @returns {HTMLElement} 配置项元素
+ * Create config item element
+ * @param {Object} config - Config data
+ * @param {number} index - Index
+ * @returns {HTMLElement} Config item element
  */
 function createConfigItemElement(config, index) {
-    // 从布尔值 isUsed 转换为状态字符串用于显示
+    // Convert boolean isUsed to status string for display
     const configStatus = config.isUsed ? 'used' : 'unused';
     const item = document.createElement('div');
     item.className = `config-item-manager ${configStatus}`;
     item.dataset.index = index;
 
     const statusIcon = config.isUsed ? 'fa-check-circle' : 'fa-circle';
-    const statusText = config.isUsed ? '已关联' : '未关联';
+    const statusText = config.isUsed ? 'Linked' : 'Unlinked';
 
     const typeIcon = config.type === 'oauth' ? 'fa-key' :
                     config.type === 'api-key' ? 'fa-lock' :
                     config.type === 'provider-pool' ? 'fa-network-wired' :
                     config.type === 'system-prompt' ? 'fa-file-text' : 'fa-cog';
 
-    // 生成关联详情HTML
+    // Generate usage info HTML
     const usageInfoHtml = generateUsageInfoHtml(config);
     
-    // 判断是否可以一键关联（未关联且路径包含支持的提供商目录）
+    // Check if quick link is possible (unlinked and path contains supported provider directory)
     const providerInfo = detectProviderFromPath(config.path);
     const canQuickLink = !config.isUsed && providerInfo !== null;
     const quickLinkBtnHtml = canQuickLink ?
-        `<button class="btn-quick-link" data-path="${config.path}" title="一键关联到 ${providerInfo.displayName}">
+        `<button class="btn-quick-link" data-path="${config.path}" title="Quick link to ${providerInfo.displayName}">
             <i class="fas fa-link"></i> ${providerInfo.shortName}
         </button>` : '';
 
@@ -104,29 +104,29 @@ function createConfigItemElement(config, index) {
         <div class="config-item-details">
             <div class="config-details-grid">
                 <div class="config-detail-item">
-                    <div class="config-detail-label">文件路径</div>
+                    <div class="config-detail-label">File Path</div>
                     <div class="config-detail-value">${config.path}</div>
                 </div>
                 <div class="config-detail-item">
-                    <div class="config-detail-label">文件大小</div>
+                    <div class="config-detail-label">File Size</div>
                     <div class="config-detail-value">${formatFileSize(config.size)}</div>
                 </div>
                 <div class="config-detail-item">
-                    <div class="config-detail-label">最后修改</div>
+                    <div class="config-detail-label">Last Modified</div>
                     <div class="config-detail-value">${formatDate(config.modified)}</div>
                 </div>
                 <div class="config-detail-item">
-                    <div class="config-detail-label">关联状态</div>
+                    <div class="config-detail-label">Link Status</div>
                     <div class="config-detail-value">${statusText}</div>
                 </div>
             </div>
             ${usageInfoHtml}
             <div class="config-item-actions">
                 <button class="btn-small btn-view" data-path="${config.path}">
-                    <i class="fas fa-eye"></i> 查看
+                    <i class="fas fa-eye"></i> View
                 </button>
                 <button class="btn-small btn-delete-small" data-path="${config.path}">
-                    <i class="fas fa-trash"></i> 删除
+                    <i class="fas fa-trash"></i> Delete
                 </button>
             </div>
         </div>
@@ -150,7 +150,7 @@ function createConfigItemElement(config, index) {
         });
     }
 
-    // 一键关联按钮事件
+    // Quick link button event
     const quickLinkBtn = item.querySelector('.btn-quick-link');
     if (quickLinkBtn) {
         quickLinkBtn.addEventListener('click', (e) => {
@@ -159,7 +159,7 @@ function createConfigItemElement(config, index) {
         });
     }
 
-    // 添加点击事件展开/折叠详情
+    // Add click event to expand/collapse details
     item.addEventListener('click', (e) => {
         if (!e.target.closest('.config-item-actions')) {
             item.classList.toggle('expanded');
@@ -170,9 +170,9 @@ function createConfigItemElement(config, index) {
 }
 
 /**
- * 生成关联详情HTML
- * @param {Object} config - 配置数据
- * @returns {string} HTML字符串
+ * Generate usage info HTML
+ * @param {Object} config - Config data
+ * @returns {string} HTML string
  */
 function generateUsageInfoHtml(config) {
     if (!config.usageInfo || !config.usageInfo.isUsed) {
@@ -186,17 +186,17 @@ function generateUsageInfoHtml(config) {
     }
 
     const typeLabels = {
-        'main_config': '主要配置',
-        'provider_pool': '提供商池',
-        'multiple': '多种用途'
+        'main_config': 'Main Configuration',
+        'provider_pool': 'Provider Pool',
+        'multiple': 'Multiple Uses'
     };
 
-    const typeLabel = typeLabels[usageType] || '未知用途';
+    const typeLabel = typeLabels[usageType] || 'Unknown Usage';
 
     let detailsHtml = '';
     usageDetails.forEach(detail => {
-        const icon = detail.type === '主要配置' ? 'fa-cog' : 'fa-network-wired';
-        const usageTypeKey = detail.type === '主要配置' ? 'main_config' : 'provider_pool';
+        const icon = detail.type === 'Main Config' ? 'fa-cog' : 'fa-network-wired';
+        const usageTypeKey = detail.type === 'Main Config' ? 'main_config' : 'provider_pool';
         detailsHtml += `
             <div class="usage-detail-item" data-usage-type="${usageTypeKey}">
                 <i class="fas ${icon}"></i>
@@ -210,7 +210,7 @@ function generateUsageInfoHtml(config) {
         <div class="config-usage-info">
             <div class="usage-info-header">
                 <i class="fas fa-link"></i>
-                <span class="usage-info-title">关联详情 (${typeLabel})</span>
+                <span class="usage-info-title">Link Details (${typeLabel})</span>
             </div>
             <div class="usage-details-list">
                 ${detailsHtml}
@@ -220,9 +220,9 @@ function generateUsageInfoHtml(config) {
 }
 
 /**
- * 格式化文件大小
- * @param {number} bytes - 字节数
- * @returns {string} 格式化后的大小
+ * Format file size
+ * @param {number} bytes - Bytes
+ * @returns {string} Formatted size
  */
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 B';
@@ -233,13 +233,13 @@ function formatFileSize(bytes) {
 }
 
 /**
- * 格式化日期
- * @param {string} dateString - 日期字符串
- * @returns {string} 格式化后的日期
+ * Format date
+ * @param {string} dateString - Date string
+ * @returns {string} Formatted date
  */
 function formatDate(dateString) {
     const date = new Date(dateString);
-    return date.toLocaleString('zh-CN', {
+    return date.toLocaleString('en-US', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -249,7 +249,7 @@ function formatDate(dateString) {
 }
 
 /**
- * 更新统计信息
+ * Update statistics
  */
 function updateStats() {
     const totalCount = filteredConfigs.length;
@@ -260,9 +260,9 @@ function updateStats() {
     const usedEl = document.getElementById('usedConfigCount');
     const unusedEl = document.getElementById('unusedConfigCount');
 
-    if (totalEl) totalEl.textContent = `共 ${totalCount} 个配置文件`;
-    if (usedEl) usedEl.textContent = `已关联: ${usedCount}`;
-    if (unusedEl) unusedEl.textContent = `未关联: ${unusedCount}`;
+    if (totalEl) totalEl.textContent = `Total ${totalCount} config files`;
+    if (usedEl) usedEl.textContent = `Linked: ${usedCount}`;
+    if (unusedEl) unusedEl.textContent = `Unlinked: ${unusedCount}`;
 }
 
 /**

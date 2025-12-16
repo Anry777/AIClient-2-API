@@ -188,6 +188,20 @@ The `install-and-run` script automatically:
 
 > **💡 Tip**: The script will automatically install dependencies and start the server. If you encounter any issues, the script provides clear error messages and suggested solutions.
 
+### 🐳 Quick Start with Docker Compose
+
+This repository also includes a `docker-compose.yml` for running the service in Docker.
+
+```bash
+docker compose up -d --build
+```
+
+Access:
+
+- **API/Web UI**: `http://localhost:3001`
+
+> **Note**: The compose file mounts local OAuth/SSO credential files into the container. If you don't use those providers (or the files don't exist on your machine), adjust/remove the corresponding `volumes` entries.
+
 ---
 
 ### 📋 Core Features
@@ -210,7 +224,7 @@ A comprehensive web-based management interface offering:
 
 **🔐 Login**: Authentication required (default: `admin123`, modify via `pwd` file)
 
-Access: `http://localhost:3000` → Login → Sidebar navigation → Immediate effect changes
+Access: `http://localhost:3001` → Login → Sidebar navigation → Immediate effect changes
 
 #### MCP Protocol Support
 This project is fully compatible with **Model Context Protocol (MCP)**, enabling seamless integration with MCP-supporting clients for powerful functional extensions.

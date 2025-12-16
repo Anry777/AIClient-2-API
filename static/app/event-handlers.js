@@ -1,29 +1,29 @@
-// 事件监听器模块
+// Event listeners module
 
 import { elements, autoScroll, setAutoScroll, clearLogs } from './constants.js';
 import { showToast } from './utils.js';
 
 /**
- * 初始化所有事件监听器
+ * Initialize all event listeners
  */
 function initEventListeners() {
-    // 刷新按钮
+    // Refresh button
     if (elements.refreshBtn) {
         elements.refreshBtn.addEventListener('click', handleRefresh);
     }
 
-    // 清空日志
+    // Clear logs
     if (elements.clearLogsBtn) {
         elements.clearLogsBtn.addEventListener('click', () => {
             clearLogs();
             if (elements.logsContainer) {
                 elements.logsContainer.innerHTML = '';
             }
-            showToast('日志已清空', 'success');
+            showToast('Logs cleared', 'success');
         });
     }
 
-    // 自动滚动切换
+    // Auto-scroll toggle
     if (elements.toggleAutoScrollBtn) {
         elements.toggleAutoScrollBtn.addEventListener('click', () => {
             const newAutoScroll = !autoScroll;
@@ -31,48 +31,48 @@ function initEventListeners() {
             elements.toggleAutoScrollBtn.dataset.enabled = newAutoScroll;
             elements.toggleAutoScrollBtn.innerHTML = `
                 <i class="fas fa-arrow-down"></i>
-                自动滚动: ${newAutoScroll ? '开' : '关'}
+                Auto-scroll: ${newAutoScroll ? 'On' : 'Off'}
             `;
         });
     }
 
-    // 保存配置
+    // Save configuration
     if (elements.saveConfigBtn) {
         elements.saveConfigBtn.addEventListener('click', saveConfiguration);
     }
 
-    // 重置配置
+    // Reset configuration
     if (elements.resetConfigBtn) {
         elements.resetConfigBtn.addEventListener('click', loadInitialData);
     }
 
-    // 模型提供商切换
+    // Model provider switch
     if (elements.modelProvider) {
         elements.modelProvider.addEventListener('change', handleProviderChange);
     }
 
-    // Gemini凭据类型切换
+    // Gemini credentials type switch
     document.querySelectorAll('input[name="geminiCredsType"]').forEach(radio => {
         radio.addEventListener('change', handleGeminiCredsTypeChange);
     });
 
-    // Kiro凭据类型切换
+    // Kiro credentials type switch
     document.querySelectorAll('input[name="kiroCredsType"]').forEach(radio => {
         radio.addEventListener('change', handleKiroCredsTypeChange);
     });
 
-    // 密码显示/隐藏切换
+    // Password show/hide toggle
     document.querySelectorAll('.password-toggle').forEach(button => {
         button.addEventListener('click', handlePasswordToggle);
     });
 
-    // 提供商池配置监听
+    // Provider pools config listener
     // const providerPoolsInput = document.getElementById('providerPoolsFilePath');
     // if (providerPoolsInput) {
     //     providerPoolsInput.addEventListener('input', handleProviderPoolsConfigChange);
     // }
 
-    // 日志容器滚动
+    // Log container scroll
     if (elements.logsContainer) {
         elements.logsContainer.addEventListener('scroll', () => {
             if (autoScroll) {
@@ -83,7 +83,7 @@ function initEventListeners() {
                     elements.toggleAutoScrollBtn.dataset.enabled = false;
                     elements.toggleAutoScrollBtn.innerHTML = `
                         <i class="fas fa-arrow-down"></i>
-                        自动滚动: 关
+                        Auto-scroll: Off
                     `;
                 }
             }
@@ -92,7 +92,7 @@ function initEventListeners() {
 }
 
 /**
- * 提供商配置切换处理
+ * Provider configuration switch handler
  */
 function handleProviderChange() {
     const selectedProvider = elements.modelProvider?.value;
@@ -100,12 +100,12 @@ function handleProviderChange() {
 
     const allProviderConfigs = document.querySelectorAll('.provider-config');
     
-    // 隐藏所有提供商配置
+    // Hide all provider configs
     allProviderConfigs.forEach(config => {
         config.style.display = 'none';
     });
     
-    // 显示当前选中的提供商配置
+    // Show currently selected provider config
     const targetConfig = document.querySelector(`[data-provider="${selectedProvider}"]`);
     if (targetConfig) {
         targetConfig.style.display = 'block';
@@ -113,8 +113,8 @@ function handleProviderChange() {
 }
 
 /**
- * Gemini凭据类型切换
- * @param {Event} event - 事件对象
+ * Gemini credentials type switch
+ * @param {Event} event - Event object
  */
 function handleGeminiCredsTypeChange(event) {
     const selectedType = event.target.value;
@@ -131,8 +131,8 @@ function handleGeminiCredsTypeChange(event) {
 }
 
 /**
- * Kiro凭据类型切换
- * @param {Event} event - 事件对象
+ * Kiro credentials type switch
+ * @param {Event} event - Event object
  */
 function handleKiroCredsTypeChange(event) {
     const selectedType = event.target.value;
@@ -149,8 +149,8 @@ function handleKiroCredsTypeChange(event) {
 }
 
 /**
- * 密码显示/隐藏切换处理
- * @param {Event} event - 事件对象
+ * Password show/hide toggle handler
+ * @param {Event} event - Event object
  */
 function handlePasswordToggle(event) {
     const button = event.target.closest('.password-toggle');
@@ -172,26 +172,26 @@ function handlePasswordToggle(event) {
 }
 
 /**
- * 提供商池配置变化处理
- * @param {Event} event - 事件对象
+ * Provider pools configuration change handler
+ * @param {Event} event - Event object
  */
 function handleProviderPoolsConfigChange(event) {
     const filePath = event.target.value.trim();
     const providersMenuItem = document.querySelector('.nav-item[data-section="providers"]');
     
     if (filePath) {
-        // 显示提供商池菜单
+        // Show provider pools menu
         if (providersMenuItem) providersMenuItem.style.display = 'flex';
     } else {
-        // 隐藏提供商池菜单
+        // Hide provider pools menu
         if (providersMenuItem) providersMenuItem.style.display = 'none';
         
-        // 如果当前在提供商池页面，切换到仪表盘
+        // If currently on provider pools page, switch to dashboard
         if (providersMenuItem && providersMenuItem.classList.contains('active')) {
             const dashboardItem = document.querySelector('.nav-item[data-section="dashboard"]');
             const dashboardSection = document.getElementById('dashboard');
             
-            // 更新导航状态
+            // Update navigation state
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
             
@@ -202,8 +202,8 @@ function handleProviderPoolsConfigChange(event) {
 }
 
 /**
- * 密码显示/隐藏切换处理（用于模态框中的密码输入框）
- * @param {HTMLElement} button - 按钮元素
+ * Password show/hide toggle handler (for password inputs in modals)
+ * @param {HTMLElement} button - Button element
  */
 function handleProviderPasswordToggle(button) {
     const targetKey = button.getAttribute('data-target');
@@ -221,26 +221,26 @@ function handleProviderPasswordToggle(button) {
     }
 }
 
-// 数据加载函数（需要从主模块导入）
+// Data loading functions (to be imported from main module)
 let loadInitialData;
 let saveConfiguration;
 let reloadConfig;
 
-// 刷新处理函数
+// Refresh handler function
 async function handleRefresh() {
     try {
-        // 先刷新基础数据
+        // First refresh basic data
         if (loadInitialData) {
             loadInitialData();
         }
         
-        // 如果reloadConfig函数可用，则也刷新配置
+        // If reloadConfig function is available, also refresh config
         if (reloadConfig) {
             await reloadConfig();
         }
     } catch (error) {
-        console.error('刷新失败:', error);
-        showToast('刷新失败: ' + error.message, 'error');
+        console.error('Refresh failed:', error);
+        showToast('Refresh failed: ' + error.message, 'error');
     }
 }
 

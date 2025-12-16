@@ -1,32 +1,32 @@
-// 模态框管理模块
+// Modal management module
 
 import { showToast, getFieldLabel, getProviderTypeFields } from './utils.js';
 import { handleProviderPasswordToggle } from './event-handlers.js';
 
-// 分页配置
+// Pagination configuration
 const PROVIDERS_PER_PAGE = 5;
 let currentPage = 1;
 let currentProviders = [];
 let currentProviderType = '';
-let cachedModels = []; // 缓存模型列表
+let cachedModels = []; // Cached model list
 
 /**
- * 显示提供商管理模态框
- * @param {Object} data - 提供商数据
+ * Show provider management modal
+ * @param {Object} data - Provider data
  */
 function showProviderManagerModal(data) {
     const { providerType, providers, totalCount, healthyCount } = data;
     
-    // 保存当前数据用于分页
+    // Save current data for pagination
     currentProviders = providers;
     currentProviderType = providerType;
     currentPage = 1;
     cachedModels = [];
     
-    // 移除已存在的模态框
+    // Remove existing modal
     const existingModal = document.querySelector('.provider-modal');
     if (existingModal) {
-        // 清理事件监听器
+        // Clean up event listeners
         if (existingModal.cleanup) {
             existingModal.cleanup();
         }
@@ -35,14 +35,14 @@ function showProviderManagerModal(data) {
     
     const totalPages = Math.ceil(providers.length / PROVIDERS_PER_PAGE);
     
-    // 创建模态框
+    // Create modal
     const modal = document.createElement('div');
     modal.className = 'provider-modal';
     modal.setAttribute('data-provider-type', providerType);
     modal.innerHTML = `
         <div class="provider-modal-content">
             <div class="provider-modal-header">
-                <h3><i class="fas fa-cogs"></i> 管理 ${providerType} 提供商配置</h3>
+                <h3><i class="fas fa-cogs"></i> Manage ${providerType} Provider Configuration</h3>
                 <button class="modal-close" onclick="window.closeProviderModal(this)">
                     <i class="fas fa-times"></i>
                 </button>
@@ -50,22 +50,22 @@ function showProviderManagerModal(data) {
             <div class="provider-modal-body">
                 <div class="provider-summary">
                     <div class="provider-summary-item">
-                        <span class="label">总账户数:</span>
+                        <span class="label">Total Accounts:</span>
                         <span class="value">${totalCount}</span>
                     </div>
                     <div class="provider-summary-item">
-                        <span class="label">健康账户:</span>
+                        <span class="label">Healthy Accounts:</span>
                         <span class="value">${healthyCount}</span>
                     </div>
                     <div class="provider-summary-actions">
                         <button class="btn btn-success" onclick="window.showAddProviderForm('${providerType}')">
-                            <i class="fas fa-plus"></i> 添加新提供商
+                            <i class="fas fa-plus"></i> Add New Provider
                         </button>
-                        <button class="btn btn-warning" onclick="window.resetAllProvidersHealth('${providerType}')" title="将所有节点的健康状态重置为健康">
-                            <i class="fas fa-heartbeat"></i> 重置为健康
+                        <button class="btn btn-warning" onclick="window.resetAllProvidersHealth('${providerType}')" title="Reset all nodes to healthy status">
+                            <i class="fas fa-heartbeat"></i> Reset to Healthy
                         </button>
-                        <button class="btn btn-info" onclick="window.performHealthCheck('${providerType}')" title="对所有节点执行健康检测">
-                            <i class="fas fa-stethoscope"></i> 健康检测
+                        <button class="btn btn-info" onclick="window.performHealthCheck('${providerType}')" title="Perform health check on all nodes">
+                            <i class="fas fa-stethoscope"></i> Health Check
                         </button>
                     </div>
                 </div>
@@ -81,30 +81,30 @@ function showProviderManagerModal(data) {
         </div>
     `;
     
-    // 添加到页面
+    // Add to page
     document.body.appendChild(modal);
     
-    // 添加模态框事件监听
+    // Add modal event listeners
     addModalEventListeners(modal);
     
-    // 先获取该提供商类型的模型列表（只调用一次API）
+    // First get model list for this provider type (only call API once)
     const pageProviders = providers.slice(0, PROVIDERS_PER_PAGE);
     loadModelsForProviderType(providerType, pageProviders);
 }
 
 /**
- * 渲染分页控件
- * @param {number} currentPage - 当前页码
- * @param {number} totalPages - 总页数
- * @param {number} totalItems - 总条目数
- * @param {string} position - 位置标识 (top/bottom)
- * @returns {string} HTML字符串
+ * Render pagination controls
+ * @param {number} currentPage - Current page number
+ * @param {number} totalPages - Total pages
+ * @param {number} totalItems - Total items
+ * @param {string} position - Position identifier (top/bottom)
+ * @returns {string} HTML string
  */
 function renderPagination(page, totalPages, totalItems, position = 'top') {
     const startItem = (page - 1) * PROVIDERS_PER_PAGE + 1;
     const endItem = Math.min(page * PROVIDERS_PER_PAGE, totalItems);
     
-    // 生成页码按钮
+    // Generate page number buttons
     let pageButtons = '';
     const maxVisiblePages = 5;
     let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
@@ -135,7 +135,7 @@ function renderPagination(page, totalPages, totalItems, position = 'top') {
     return `
         <div class="pagination-container ${position}" data-position="${position}">
             <div class="pagination-info">
-                显示 ${startItem}-${endItem} / 共 ${totalItems} 条
+                Showing ${startItem}-${endItem} / Total ${totalItems}
             </div>
             <div class="pagination-controls">
                 <button class="page-btn nav-btn" onclick="window.goToProviderPage(${page - 1})" ${page <= 1 ? 'disabled' : ''}>
@@ -147,54 +147,54 @@ function renderPagination(page, totalPages, totalItems, position = 'top') {
                 </button>
             </div>
             <div class="pagination-jump">
-                <span>跳转到</span>
+                <span>Jump to</span>
                 <input type="number" min="1" max="${totalPages}" value="${page}" 
                        onkeypress="if(event.key==='Enter')window.goToProviderPage(parseInt(this.value))"
                        class="page-jump-input">
-                <span>页</span>
+                <span>page</span>
             </div>
         </div>
     `;
 }
 
 /**
- * 跳转到指定页
- * @param {number} page - 目标页码
+ * Jump to specified page
+ * @param {number} page - Target page number
  */
 function goToProviderPage(page) {
     const totalPages = Math.ceil(currentProviders.length / PROVIDERS_PER_PAGE);
     
-    // 验证页码范围
+    // Validate page number range
     if (page < 1) page = 1;
     if (page > totalPages) page = totalPages;
     
     currentPage = page;
     
-    // 更新提供商列表
+    // Update provider list
     const providerList = document.getElementById('providerList');
     if (providerList) {
         providerList.innerHTML = renderProviderListPaginated(currentProviders, page);
     }
     
-    // 更新分页控件
+    // Update pagination controls
     const paginationContainers = document.querySelectorAll('.pagination-container');
     paginationContainers.forEach(container => {
         const position = container.getAttribute('data-position');
         container.outerHTML = renderPagination(page, totalPages, currentProviders.length, position);
     });
     
-    // 滚动到顶部
+    // Scroll to top
     const modalBody = document.querySelector('.provider-modal-body');
     if (modalBody) {
         modalBody.scrollTop = 0;
     }
     
-    // 为当前页的提供商加载模型列表
+    // Load model list for providers on current page
     const startIndex = (page - 1) * PROVIDERS_PER_PAGE;
     const endIndex = Math.min(startIndex + PROVIDERS_PER_PAGE, currentProviders.length);
     const pageProviders = currentProviders.slice(startIndex, endIndex);
     
-    // 如果已缓存模型列表，直接使用
+    // If model list is cached, use it directly
     if (cachedModels.length > 0) {
         pageProviders.forEach(provider => {
             renderNotSupportedModelsSelector(provider.uuid, cachedModels, provider.notSupportedModels || []);
@@ -205,10 +205,10 @@ function goToProviderPage(page) {
 }
 
 /**
- * 渲染分页后的提供商列表
- * @param {Array} providers - 提供商数组
- * @param {number} page - 当前页码
- * @returns {string} HTML字符串
+ * Render paginated provider list
+ * @param {Array} providers - Provider array
+ * @param {number} page - Current page number
+ * @returns {string} HTML string
  */
 function renderProviderListPaginated(providers, page) {
     const startIndex = (page - 1) * PROVIDERS_PER_PAGE;
@@ -219,13 +219,13 @@ function renderProviderListPaginated(providers, page) {
 }
 
 /**
- * 为提供商类型加载模型列表（优化：只调用一次API，并缓存结果）
- * @param {string} providerType - 提供商类型
- * @param {Array} providers - 提供商列表
+ * Load model list for provider type (optimized: only call API once and cache results)
+ * @param {string} providerType - Provider type
+ * @param {Array} providers - Provider list
  */
 async function loadModelsForProviderType(providerType, providers) {
     try {
-        // 如果已有缓存，直接使用
+        // If already cached, use directly
         if (cachedModels.length > 0) {
             providers.forEach(provider => {
                 renderNotSupportedModelsSelector(provider.uuid, cachedModels, provider.notSupportedModels || []);
@@ -233,35 +233,35 @@ async function loadModelsForProviderType(providerType, providers) {
             return;
         }
         
-        // 只调用一次API获取模型列表
+        // Only call API once to get model list
         const response = await window.apiClient.get(`/provider-models/${encodeURIComponent(providerType)}`);
         const models = response.models || [];
         
-        // 缓存模型列表
+        // Cache model list
         cachedModels = models;
         
-        // 为每个提供商渲染模型选择器
+        // Render model selector for each provider
         providers.forEach(provider => {
             renderNotSupportedModelsSelector(provider.uuid, models, provider.notSupportedModels || []);
         });
     } catch (error) {
         console.error('Failed to load models for provider type:', error);
-        // 如果加载失败，为每个提供商显示错误信息
+        // If loading fails, show error message for each provider
         providers.forEach(provider => {
             const container = document.querySelector(`.not-supported-models-container[data-uuid="${provider.uuid}"]`);
             if (container) {
-                container.innerHTML = '<div class="error-message">加载模型列表失败</div>';
+                container.innerHTML = '<div class="error-message">Failed to load model list</div>';
             }
         });
     }
 }
 
 /**
- * 为模态框添加事件监听器
- * @param {HTMLElement} modal - 模态框元素
+ * Add event listeners to modal
+ * @param {HTMLElement} modal - Modal element
  */
 function addModalEventListeners(modal) {
-    // ESC键关闭模态框
+    // Close modal on ESC key
     const handleEscKey = (event) => {
         if (event.key === 'Escape') {
             modal.remove();
@@ -269,7 +269,7 @@ function addModalEventListeners(modal) {
         }
     };
     
-    // 点击背景关闭模态框
+    // Close modal on background click
     const handleBackgroundClick = (event) => {
         if (event.target === modal) {
             modal.remove();
@@ -277,13 +277,13 @@ function addModalEventListeners(modal) {
         }
     };
     
-    // 防止模态框内容区域点击时关闭模态框
+    // Prevent modal from closing when clicking on content area
     const modalContent = modal.querySelector('.provider-modal-content');
     const handleContentClick = (event) => {
         event.stopPropagation();
     };
     
-    // 密码切换按钮事件处理
+    // Password toggle button event handler
     const handlePasswordToggleClick = (event) => {
         const button = event.target.closest('.password-toggle');
         if (button) {
@@ -293,7 +293,7 @@ function addModalEventListeners(modal) {
         }
     };
     
-    // 上传按钮事件处理
+    // Upload button event handler
     const handleUploadButtonClick = (event) => {
         const button = event.target.closest('.upload-btn');
         if (button) {
@@ -307,7 +307,7 @@ function addModalEventListeners(modal) {
         }
     };
     
-    // 添加事件监听器
+    // Add event listeners
     document.addEventListener('keydown', handleEscKey);
     modal.addEventListener('click', handleBackgroundClick);
     if (modalContent) {
@@ -316,7 +316,7 @@ function addModalEventListeners(modal) {
         modalContent.addEventListener('click', handleUploadButtonClick);
     }
     
-    // 清理函数，在模态框关闭时调用
+    // Cleanup function, called when modal closes
     modal.cleanup = () => {
         document.removeEventListener('keydown', handleEscKey);
         modal.removeEventListener('click', handleBackgroundClick);
@@ -329,8 +329,8 @@ function addModalEventListeners(modal) {
 }
 
 /**
- * 关闭模态框并清理事件监听器
- * @param {HTMLElement} button - 关闭按钮
+ * Close modal and clean up event listeners
+ * @param {HTMLElement} button - Close button
  */
 function closeProviderModal(button) {
     const modal = button.closest('.provider-modal');
@@ -343,35 +343,35 @@ function closeProviderModal(button) {
 }
 
 /**
- * 渲染提供商列表
- * @param {Array} providers - 提供商数组
- * @returns {string} HTML字符串
+ * Render provider list
+ * @param {Array} providers - Provider array
+ * @returns {string} HTML string
  */
 function renderProviderList(providers) {
     return providers.map(provider => {
         const isHealthy = provider.isHealthy;
         const isDisabled = provider.isDisabled || false;
-        const lastUsed = provider.lastUsed ? new Date(provider.lastUsed).toLocaleString() : '从未使用';
-        const lastHealthCheckTime = provider.lastHealthCheckTime ? new Date(provider.lastHealthCheckTime).toLocaleString() : '从未检测';
+        const lastUsed = provider.lastUsed ? new Date(provider.lastUsed).toLocaleString() : 'Never used';
+        const lastHealthCheckTime = provider.lastHealthCheckTime ? new Date(provider.lastHealthCheckTime).toLocaleString() : 'Never checked';
         const lastHealthCheckModel = provider.lastHealthCheckModel || '-';
         const healthClass = isHealthy ? 'healthy' : 'unhealthy';
         const disabledClass = isDisabled ? 'disabled' : '';
         const healthIcon = isHealthy ? 'fas fa-check-circle text-success' : 'fas fa-exclamation-triangle text-warning';
-        const healthText = isHealthy ? '正常' : '异常';
-        const disabledText = isDisabled ? '已禁用' : '已启用';
+        const healthText = isHealthy ? 'Healthy' : 'Unhealthy';
+        const disabledText = isDisabled ? 'Disabled' : 'Enabled';
         const disabledIcon = isDisabled ? 'fas fa-ban text-muted' : 'fas fa-play text-success';
-        const toggleButtonText = isDisabled ? '启用' : '禁用';
+        const toggleButtonText = isDisabled ? 'Enable' : 'Disable';
         const toggleButtonIcon = isDisabled ? 'fas fa-play' : 'fas fa-ban';
         const toggleButtonClass = isDisabled ? 'btn-success' : 'btn-warning';
         
-        // 构建错误信息显示
+        // Build error info display
         let errorInfoHtml = '';
         if (!isHealthy && provider.lastErrorMessage) {
             const escapedErrorMsg = provider.lastErrorMessage.replace(/</g, '&lt;').replace(/>/g, '&gt;');
             errorInfoHtml = `
                 <div class="provider-error-info">
                     <i class="fas fa-exclamation-circle text-danger"></i>
-                    <span class="error-label">最后错误:</span>
+                    <span class="error-label">Last Error:</span>
                     <span class="error-message" title="${escapedErrorMsg}">${escapedErrorMsg}</span>
                 </div>
             `;
@@ -385,37 +385,37 @@ function renderProviderList(providers) {
                         <div class="provider-meta">
                             <span class="health-status">
                                 <i class="${healthIcon}"></i>
-                                健康状态: ${healthText}
+                                Health: ${healthText}
                             </span> |
                             <span class="disabled-status">
                                 <i class="${disabledIcon}"></i>
-                                状态: ${disabledText}
+                                Status: ${disabledText}
                             </span> |
-                            使用次数: ${provider.usageCount || 0} |
-                            失败次数: ${provider.errorCount || 0} |
-                            最后使用: ${lastUsed}
+                            Usage: ${provider.usageCount || 0} |
+                            Errors: ${provider.errorCount || 0} |
+                            Last Used: ${lastUsed}
                         </div>
                         <div class="provider-health-meta">
                             <span class="health-check-time">
                                 <i class="fas fa-clock"></i>
-                                最后检测: ${lastHealthCheckTime}
+                                Last Check: ${lastHealthCheckTime}
                             </span> |
                             <span class="health-check-model">
                                 <i class="fas fa-cube"></i>
-                                检测模型: ${lastHealthCheckModel}
+                                Check Model: ${lastHealthCheckModel}
                             </span>
                         </div>
                         ${errorInfoHtml}
                     </div>
                     <div class="provider-actions-group">
-                        <button class="btn-small ${toggleButtonClass}" onclick="window.toggleProviderStatus('${provider.uuid}', event)" title="${toggleButtonText}此提供商">
+                        <button class="btn-small ${toggleButtonClass}" onclick="window.toggleProviderStatus('${provider.uuid}', event)" title="${toggleButtonText} this provider">
                             <i class="${toggleButtonIcon}"></i> ${toggleButtonText}
                         </button>
                         <button class="btn-small btn-edit" onclick="window.editProvider('${provider.uuid}', event)">
-                            <i class="fas fa-edit"></i> 编辑
+                            <i class="fas fa-edit"></i> Edit
                         </button>
                         <button class="btn-small btn-delete" onclick="window.deleteProvider('${provider.uuid}', event)">
-                            <i class="fas fa-trash"></i> 删除
+                            <i class="fas fa-trash"></i> Delete
                         </button>
                     </div>
                 </div>
@@ -430,15 +430,15 @@ function renderProviderList(providers) {
 }
 
 /**
- * 渲染提供商配置
- * @param {Object} provider - 提供商对象
- * @returns {string} HTML字符串
+ * Render provider configuration
+ * @param {Object} provider - Provider object
+ * @returns {string} HTML string
  */
 function renderProviderConfig(provider) {
-    // 获取字段映射，确保顺序一致
+    // Get field mapping, ensure consistent order
     const fieldOrder = getFieldOrder(provider);
     
-    // 先渲染基础配置字段（checkModelName 和 checkHealth）
+    // First render basic config fields (checkModelName and checkHealth)
     let html = '<div class="form-grid">';
     const baseFields = ['checkModelName', 'checkHealth'];
     
@@ -447,9 +447,9 @@ function renderProviderConfig(provider) {
         const value = provider[fieldKey];
         const displayValue = value || '';
         
-        // 如果是 checkHealth 字段，使用下拉选择框
+        // If checkHealth field, use dropdown selector
         if (fieldKey === 'checkHealth') {
-            // 如果没有值，默认为 false
+            // If no value, default to false
             const actualValue = value !== undefined ? value : false;
             const isEnabled = actualValue === true || actualValue === 'true';
             html += `
@@ -459,13 +459,13 @@ function renderProviderConfig(provider) {
                             data-config-key="${fieldKey}"
                             data-config-value="${actualValue}"
                             disabled>
-                        <option value="true" ${isEnabled ? 'selected' : ''}>启用</option>
-                        <option value="false" ${!isEnabled ? 'selected' : ''}>禁用</option>
+                        <option value="true" ${isEnabled ? 'selected' : ''}>Enabled</option>
+                        <option value="false" ${!isEnabled ? 'selected' : ''}>Disabled</option>
                     </select>
                 </div>
             `;
         } else {
-            // checkModelName 字段始终显示
+            // checkModelName field always displayed
             html += `
                 <div class="config-item">
                     <label>${displayLabel}</label>
@@ -480,7 +480,7 @@ function renderProviderConfig(provider) {
     });
     html += '</div>';
     
-    // 渲染其他配置字段，每行2列
+    // Render other config fields, 2 columns per row
     const otherFields = fieldOrder.filter(key => !baseFields.includes(key));
     
     for (let i = 0; i < otherFields.length; i += 2) {
@@ -521,7 +521,7 @@ function renderProviderConfig(provider) {
                                readonly
                                data-config-key="${field1Key}"
                                data-config-value="${field1Value || ''}">
-                        <button type="button" class="btn btn-outline upload-btn" data-target="edit-${provider.uuid}-${field1Key}" aria-label="上传文件" disabled>
+                        <button type="button" class="btn btn-outline upload-btn" data-target="edit-${provider.uuid}-${field1Key}" aria-label="Upload file" disabled>
                             <i class="fas fa-upload"></i>
                         </button>
                     </div>
@@ -540,7 +540,7 @@ function renderProviderConfig(provider) {
             `;
         }
         
-        // 如果有第二个字段
+        // If there is a second field
         if (i + 1 < otherFields.length) {
             const field2Key = otherFields[i + 1];
             const field2Label = getFieldLabel(field2Key);
@@ -577,7 +577,7 @@ function renderProviderConfig(provider) {
                                    readonly
                                    data-config-key="${field2Key}"
                                    data-config-value="${field2Value || ''}">
-                            <button type="button" class="btn btn-outline upload-btn" data-target="edit-${provider.uuid}-${field2Key}" aria-label="上传文件" disabled>
+                            <button type="button" class="btn btn-outline upload-btn" data-target="edit-${provider.uuid}-${field2Key}" aria-label="Upload file" disabled>
                                 <i class="fas fa-upload"></i>
                             </button>
                         </div>
@@ -600,17 +600,17 @@ function renderProviderConfig(provider) {
         html += '</div>';
     }
     
-    // 添加 notSupportedModels 配置区域
+    // Add notSupportedModels configuration area
     html += '<div class="form-grid full-width">';
     html += `
         <div class="config-item not-supported-models-section">
             <label>
-                <i class="fas fa-ban"></i> 不支持的模型
-                <span class="help-text">选择此提供商不支持的模型，系统会自动排除这些模型</span>
+                <i class="fas fa-ban"></i> Unsupported Models
+                <span class="help-text">Select models not supported by this provider, system will automatically exclude them</span>
             </label>
             <div class="not-supported-models-container" data-uuid="${provider.uuid}">
                 <div class="models-loading">
-                    <i class="fas fa-spinner fa-spin"></i> 加载模型列表...
+                    <i class="fas fa-spinner fa-spin"></i> Loading model list...
                 </div>
             </div>
         </div>
@@ -621,33 +621,33 @@ function renderProviderConfig(provider) {
 }
 
 /**
- * 获取字段显示顺序
- * @param {Object} provider - 提供商对象
- * @returns {Array} 字段键数组
+ * Get field display order
+ * @param {Object} provider - Provider object
+ * @returns {Array} Field key array
  */
 function getFieldOrder(provider) {
     const orderedFields = ['checkModelName', 'checkHealth'];
     
-    // 需要排除的内部状态字段
+    // Internal state fields to exclude
     const excludedFields = [
         'isHealthy', 'lastUsed', 'usageCount', 'errorCount', 'lastErrorTime',
         'uuid', 'isDisabled', 'lastHealthCheckTime', 'lastHealthCheckModel', 'lastErrorMessage'
     ];
     
-    // 获取所有其他配置项
+    // Get all other config items
     const otherFields = Object.keys(provider).filter(key =>
         !excludedFields.includes(key) && !orderedFields.includes(key)
     );
     
-    // 按字母顺序排序其他字段
+    // Sort other fields alphabetically
     otherFields.sort();
     
     return [...orderedFields, ...otherFields].filter(key => provider.hasOwnProperty(key));
 }
 
 /**
- * 切换提供商详情显示
- * @param {string} uuid - 提供商UUID
+ * Toggle provider details display
+ * @param {string} uuid - Provider UUID
  */
 function toggleProviderDetails(uuid) {
     const content = document.getElementById(`content-${uuid}`);
@@ -657,9 +657,9 @@ function toggleProviderDetails(uuid) {
 }
 
 /**
- * 编辑提供商
- * @param {string} uuid - 提供商UUID
- * @param {Event} event - 事件对象
+ * Edit provider
+ * @param {string} uuid - Provider UUID
+ * @param {Event} event - Event object
  */
 function editProvider(uuid, event) {
     event.stopPropagation();
@@ -669,14 +669,14 @@ function editProvider(uuid, event) {
     const configSelects = providerDetail.querySelectorAll('select[data-config-key]');
     const content = providerDetail.querySelector(`#content-${uuid}`);
     
-    // 如果还没有展开，则自动展开编辑框
+    // If not expanded yet, automatically expand edit box
     if (content && !content.classList.contains('expanded')) {
         toggleProviderDetails(uuid);
     }
     
-    // 等待一小段时间让展开动画完成，然后切换输入框为可编辑状态
+    // Wait a moment for expand animation to complete, then switch inputs to editable state
     setTimeout(() => {
-        // 切换输入框为可编辑状态
+        // Switch inputs to editable state
         configInputs.forEach(input => {
             input.readOnly = false;
             if (input.type === 'password') {
@@ -685,53 +685,53 @@ function editProvider(uuid, event) {
             }
         });
         
-        // 启用文件上传按钮
+        // Enable file upload buttons
         const uploadButtons = providerDetail.querySelectorAll('.upload-btn');
         uploadButtons.forEach(button => {
             button.disabled = false;
         });
         
-        // 启用下拉选择框
+        // Enable dropdown selectors
         configSelects.forEach(select => {
             select.disabled = false;
         });
         
-        // 启用模型复选框
+        // Enable model checkboxes
         const modelCheckboxes = providerDetail.querySelectorAll('.model-checkbox');
         modelCheckboxes.forEach(checkbox => {
             checkbox.disabled = false;
         });
         
-        // 添加编辑状态类
+        // Add editing state class
         providerDetail.classList.add('editing');
         
-        // 替换编辑按钮为保存和取消按钮，但保留禁用/启用按钮
+        // Replace edit button with save and cancel buttons, but keep disable/enable button
         const actionsGroup = providerDetail.querySelector('.provider-actions-group');
         const toggleButton = actionsGroup.querySelector('[onclick*="toggleProviderStatus"]');
         const currentProvider = providerDetail.closest('.provider-modal').querySelector(`[data-uuid="${uuid}"]`);
         const isCurrentlyDisabled = currentProvider.classList.contains('disabled');
-        const toggleButtonText = isCurrentlyDisabled ? '启用' : '禁用';
+        const toggleButtonText = isCurrentlyDisabled ? 'Enable' : 'Disable';
         const toggleButtonIcon = isCurrentlyDisabled ? 'fas fa-play' : 'fas fa-ban';
         const toggleButtonClass = isCurrentlyDisabled ? 'btn-success' : 'btn-warning';
         
         actionsGroup.innerHTML = `
-            <button class="btn-small ${toggleButtonClass}" onclick="window.toggleProviderStatus('${uuid}', event)" title="${toggleButtonText}此提供商">
+            <button class="btn-small ${toggleButtonClass}" onclick="window.toggleProviderStatus('${uuid}', event)" title="${toggleButtonText} this provider">
                 <i class="${toggleButtonIcon}"></i> ${toggleButtonText}
             </button>
             <button class="btn-small btn-save" onclick="window.saveProvider('${uuid}', event)">
-                <i class="fas fa-save"></i> 保存
+                <i class="fas fa-save"></i> Save
             </button>
             <button class="btn-small btn-cancel" onclick="window.cancelEdit('${uuid}', event)">
-                <i class="fas fa-times"></i> 取消
+                <i class="fas fa-times"></i> Cancel
             </button>
         `;
     }, 100);
 }
 
 /**
- * 取消编辑
- * @param {string} uuid - 提供商UUID
- * @param {Event} event - 事件对象
+ * Cancel edit
+ * @param {string} uuid - Provider UUID
+ * @param {Event} event - Event object
  */
 function cancelEdit(uuid, event) {
     event.stopPropagation();
@@ -740,64 +740,64 @@ function cancelEdit(uuid, event) {
     const configInputs = providerDetail.querySelectorAll('input[data-config-key]');
     const configSelects = providerDetail.querySelectorAll('select[data-config-key]');
     
-    // 恢复输入框为只读状态
+    // Restore inputs to read-only state
     configInputs.forEach(input => {
         input.readOnly = true;
-        // 恢复显示为密码格式（如果有的话）
+        // Restore display to password format (if applicable)
         if (input.type === 'password') {
             const actualValue = input.dataset.configValue;
             input.value = actualValue ? '••••••••' : '';
         }
     });
     
-    // 禁用模型复选框
+    // Disable model checkboxes
     const modelCheckboxes = providerDetail.querySelectorAll('.model-checkbox');
     modelCheckboxes.forEach(checkbox => {
         checkbox.disabled = true;
     });
     
-    // 移除编辑状态类
+    // Remove editing state class
     providerDetail.classList.remove('editing');
     
-    // 禁用文件上传按钮
+    // Disable file upload buttons
     const uploadButtons = providerDetail.querySelectorAll('.upload-btn');
     uploadButtons.forEach(button => {
         button.disabled = true;
     });
     
-    // 禁用下拉选择框
+    // Disable dropdown selectors
     configSelects.forEach(select => {
         select.disabled = true;
-        // 恢复原始值
+        // Restore original value
         const originalValue = select.dataset.configValue;
         select.value = originalValue || '';
     });
     
-    // 恢复原来的编辑和删除按钮，但保留禁用/启用按钮
+    // Restore original edit and delete buttons, but keep disable/enable button
     const actionsGroup = providerDetail.querySelector('.provider-actions-group');
     const currentProvider = providerDetail.closest('.provider-modal').querySelector(`[data-uuid="${uuid}"]`);
     const isCurrentlyDisabled = currentProvider.classList.contains('disabled');
-    const toggleButtonText = isCurrentlyDisabled ? '启用' : '禁用';
+    const toggleButtonText = isCurrentlyDisabled ? 'Enable' : 'Disable';
     const toggleButtonIcon = isCurrentlyDisabled ? 'fas fa-play' : 'fas fa-ban';
     const toggleButtonClass = isCurrentlyDisabled ? 'btn-success' : 'btn-warning';
     
     actionsGroup.innerHTML = `
-        <button class="btn-small ${toggleButtonClass}" onclick="window.toggleProviderStatus('${uuid}', event)" title="${toggleButtonText}此提供商">
+        <button class="btn-small ${toggleButtonClass}" onclick="window.toggleProviderStatus('${uuid}', event)" title="${toggleButtonText} this provider">
             <i class="${toggleButtonIcon}"></i> ${toggleButtonText}
         </button>
         <button class="btn-small btn-edit" onclick="window.editProvider('${uuid}', event)">
-            <i class="fas fa-edit"></i> 编辑
+            <i class="fas fa-edit"></i> Edit
         </button>
         <button class="btn-small btn-delete" onclick="window.deleteProvider('${uuid}', event)">
-            <i class="fas fa-trash"></i> 删除
+            <i class="fas fa-trash"></i> Delete
         </button>
     `;
 }
 
 /**
- * 保存提供商
- * @param {string} uuid - 提供商UUID
- * @param {Event} event - 事件对象
+ * Save provider
+ * @param {string} uuid - Provider UUID
+ * @param {Event} event - Event object
  */
 async function saveProvider(uuid, event) {
     event.stopPropagation();
@@ -821,7 +821,7 @@ async function saveProvider(uuid, event) {
         providerConfig[key] = value;
     });
     
-    // 收集不支持的模型列表
+    // Collect unsupported models list
     const modelCheckboxes = providerDetail.querySelectorAll(`.model-checkbox[data-uuid="${uuid}"]:checked`);
     const notSupportedModels = Array.from(modelCheckboxes).map(checkbox => checkbox.value);
     providerConfig.notSupportedModels = notSupportedModels;
@@ -829,24 +829,24 @@ async function saveProvider(uuid, event) {
     try {
         await window.apiClient.put(`/providers/${encodeURIComponent(providerType)}/${uuid}`, { providerConfig });
         await window.apiClient.post('/reload-config');
-        showToast('提供商配置更新成功', 'success');
+        showToast('Provider configuration updated successfully', 'success');
         // 重新获取该提供商类型的最新配置
         await refreshProviderConfig(providerType);
     } catch (error) {
         console.error('Failed to update provider:', error);
-        showToast('更新失败: ' + error.message, 'error');
+        showToast('Update failed: ' + error.message, 'error');
     }
 }
 
 /**
- * 删除提供商
- * @param {string} uuid - 提供商UUID
- * @param {Event} event - 事件对象
+ * Delete provider
+ * @param {string} uuid - Provider UUID
+ * @param {Event} event - Event object
  */
 async function deleteProvider(uuid, event) {
     event.stopPropagation();
     
-    if (!confirm('确定要删除这个提供商配置吗？此操作不可恢复。')) {
+    if (!confirm('Are you sure you want to delete this provider configuration? This action cannot be undone.')) {
         return;
     }
     
@@ -856,32 +856,32 @@ async function deleteProvider(uuid, event) {
     try {
         await window.apiClient.delete(`/providers/${encodeURIComponent(providerType)}/${uuid}`);
         await window.apiClient.post('/reload-config');
-        showToast('提供商配置删除成功', 'success');
+        showToast('Provider configuration deleted successfully', 'success');
         // 重新获取最新配置
         await refreshProviderConfig(providerType);
     } catch (error) {
         console.error('Failed to delete provider:', error);
-        showToast('删除失败: ' + error.message, 'error');
+        showToast('Delete failed: ' + error.message, 'error');
     }
 }
 
 /**
- * 重新获取并刷新提供商配置
- * @param {string} providerType - 提供商类型
+ * Refresh and reload provider config
+ * @param {string} providerType - Provider type
  */
 async function refreshProviderConfig(providerType) {
     try {
-        // 重新获取该提供商类型的最新数据
+        // Re-fetch latest data for this provider type
         const data = await window.apiClient.get(`/providers/${encodeURIComponent(providerType)}`);
         
-        // 如果当前显示的是该提供商类型的模态框，则更新模态框
+        // If currently displaying modal for this provider type, update modal
         const modal = document.querySelector('.provider-modal');
         if (modal && modal.getAttribute('data-provider-type') === providerType) {
-            // 更新缓存的提供商数据
+            // Update cached provider data
             currentProviders = data.providers;
             currentProviderType = providerType;
             
-            // 更新统计信息
+            // Update statistics
             const totalCountElement = modal.querySelector('.provider-summary-item .value');
             if (totalCountElement) {
                 totalCountElement.textContent = data.totalCount;
@@ -894,18 +894,18 @@ async function refreshProviderConfig(providerType) {
             
             const totalPages = Math.ceil(data.providers.length / PROVIDERS_PER_PAGE);
             
-            // 确保当前页不超过总页数
+            // Ensure current page doesn't exceed total pages
             if (currentPage > totalPages) {
                 currentPage = Math.max(1, totalPages);
             }
             
-            // 重新渲染提供商列表（分页）
+            // Re-render provider list (paginated)
             const providerList = modal.querySelector('.provider-list');
             if (providerList) {
                 providerList.innerHTML = renderProviderListPaginated(data.providers, currentPage);
             }
             
-            // 更新分页控件
+            // Update pagination controls
             const paginationContainers = modal.querySelectorAll('.pagination-container');
             if (totalPages > 1) {
                 paginationContainers.forEach(container => {
@@ -913,7 +913,7 @@ async function refreshProviderConfig(providerType) {
                     container.outerHTML = renderPagination(currentPage, totalPages, data.providers.length, position);
                 });
                 
-                // 如果之前没有分页控件，需要添加
+                // If no pagination controls before, need to add
                 if (paginationContainers.length === 0) {
                     const modalBody = modal.querySelector('.provider-modal-body');
                     const providerListEl = modal.querySelector('.provider-list');
@@ -923,18 +923,18 @@ async function refreshProviderConfig(providerType) {
                     }
                 }
             } else {
-                // 如果只有一页，移除分页控件
+                // If only one page, remove pagination controls
                 paginationContainers.forEach(container => container.remove());
             }
             
-            // 重新加载当前页的模型列表
+            // Reload model list for current page
             const startIndex = (currentPage - 1) * PROVIDERS_PER_PAGE;
             const endIndex = Math.min(startIndex + PROVIDERS_PER_PAGE, data.providers.length);
             const pageProviders = data.providers.slice(startIndex, endIndex);
             loadModelsForProviderType(providerType, pageProviders);
         }
         
-        // 同时更新主界面的提供商统计数据
+        // Also update provider statistics on main interface
         if (typeof window.loadProviders === 'function') {
             await window.loadProviders();
         }
@@ -945,8 +945,8 @@ async function refreshProviderConfig(providerType) {
 }
 
 /**
- * 显示添加提供商表单
- * @param {string} providerType - 提供商类型
+ * Show add provider form
+ * @param {string} providerType - Provider type
  */
 function showAddProviderForm(providerType) {
     const modal = document.querySelector('.provider-modal');
@@ -960,53 +960,53 @@ function showAddProviderForm(providerType) {
     const form = document.createElement('div');
     form.className = 'add-provider-form';
     form.innerHTML = `
-        <h4><i class="fas fa-plus"></i> 添加新提供商配置</h4>
+        <h4><i class="fas fa-plus"></i> Add New Provider Configuration</h4>
         <div class="form-grid">
             <div class="form-group">
-                <label>检查模型名称 <span class="optional-mark">(选填)</span></label>
-                <input type="text" id="newCheckModelName" placeholder="例如: gpt-3.5-turbo">
+                <label>Check Model Name <span class="optional-mark">(Optional)</span></label>
+                <input type="text" id="newCheckModelName" placeholder="e.g.: gpt-3.5-turbo">
             </div>
             <div class="form-group">
-                <label>健康检查</label>
+                <label>Health Check</label>
                 <select id="newCheckHealth">
-                    <option value="false">禁用</option>
-                    <option value="true">启用</option>
+                    <option value="false">Disabled</option>
+                    <option value="true">Enabled</option>
                 </select>
             </div>
         </div>
         <div id="dynamicConfigFields">
-            <!-- 动态配置字段将在这里显示 -->
+            <!-- Dynamic config fields will be displayed here -->
         </div>
         <div class="form-actions" style="margin-top: 15px;">
             <button class="btn btn-success" onclick="window.addProvider('${providerType}')">
-                <i class="fas fa-save"></i> 保存
+                <i class="fas fa-save"></i> Save
             </button>
             <button class="btn btn-secondary" onclick="this.closest('.add-provider-form').remove()">
-                <i class="fas fa-times"></i> 取消
+                <i class="fas fa-times"></i> Cancel
             </button>
         </div>
     `;
     
-    // 添加动态配置字段
+    // Add dynamic config fields
     addDynamicConfigFields(form, providerType);
     
-    // 为添加表单中的密码切换按钮绑定事件监听器
+    // Bind event listeners for password toggle buttons in add form
     bindAddFormPasswordToggleListeners(form);
     
-    // 插入到提供商列表前面
+    // Insert before provider list
     const providerList = modal.querySelector('.provider-list');
     providerList.parentNode.insertBefore(form, providerList);
 }
 
 /**
- * 添加动态配置字段
- * @param {HTMLElement} form - 表单元素
- * @param {string} providerType - 提供商类型
+ * Add dynamic config fields
+ * @param {HTMLElement} form - Form element
+ * @param {string} providerType - Provider type
  */
 function addDynamicConfigFields(form, providerType) {
     const configFields = form.querySelector('#dynamicConfigFields');
     
-    // 获取该提供商类型的字段配置
+    // Get field config for this provider type
     const providerFields = getProviderTypeFields(providerType);
     let fields = '';
     
@@ -1272,12 +1272,12 @@ async function resetAllProvidersHealth(providerType) {
  * @param {string} providerType - 提供商类型
  */
 async function performHealthCheck(providerType) {
-    if (!confirm(`确定要对 ${providerType} 的所有节点执行健康检测吗？\n\n这将向每个节点发送测试请求来验证其可用性。`)) {
+    if (!confirm(`Are you sure you want to perform health check on all ${providerType} nodes?\n\nThis will send test requests to each node to verify availability.`)) {
         return;
     }
     
     try {
-        showToast('正在执行健康检测，请稍候...', 'info');
+        showToast('Performing health check, please wait...', 'info');
         
         const response = await window.apiClient.post(
             `/providers/${encodeURIComponent(providerType)}/health-check`,
@@ -1290,9 +1290,9 @@ async function performHealthCheck(providerType) {
             // 统计跳过的数量（checkHealth 未启用的）
             const skippedCount = results ? results.filter(r => r.success === null).length : 0;
             
-            let message = `健康检测完成: ${successCount} 健康`;
-            if (failCount > 0) message += `, ${failCount} 异常`;
-            if (skippedCount > 0) message += `, ${skippedCount} 跳过(未启用)`;
+            let message = `Health check completed: ${successCount} healthy`;
+            if (failCount > 0) message += `, ${failCount} unhealthy`;
+            if (skippedCount > 0) message += `, ${skippedCount} skipped (disabled)`;
             
             showToast(message, failCount > 0 ? 'warning' : 'success');
             
@@ -1302,11 +1302,11 @@ async function performHealthCheck(providerType) {
             // 刷新提供商配置显示
             await refreshProviderConfig(providerType);
         } else {
-            showToast('健康检测失败', 'error');
+            showToast('Health check failed', 'error');
         }
     } catch (error) {
-        console.error('健康检测失败:', error);
-        showToast(`健康检测失败: ${error.message}`, 'error');
+        console.error('Health check failed:', error);
+        showToast(`Health check failed: ${error.message}`, 'error');
     }
 }
 

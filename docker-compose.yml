@@ -1,0 +1,19 @@
+services:
+  aiclient2api:
+    build:
+      context: .
+    image: aiclient2api
+    container_name: aiclient2api
+    restart: always
+    privileged: true
+    ports:
+      - "3001:3000"
+    environment:
+      ARGS: "--api-key 123456 --host 0.0.0.0"
+    volumes:
+      - type: bind
+        source: ${USERPROFILE}/.aws/sso/cache
+        target: /root/.aws/sso/cache
+      - type: bind
+        source: ${USERPROFILE}/.gemini/oauth_creds.json
+        target: /root/.gemini/oauth_creds.json

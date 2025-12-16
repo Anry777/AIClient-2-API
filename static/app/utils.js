@@ -1,22 +1,22 @@
-// 工具函数
+// Utility functions
 
 /**
- * 格式化运行时间
- * @param {number} seconds - 秒数
- * @returns {string} 格式化的时间字符串
+ * Format uptime
+ * @param {number} seconds - Seconds
+ * @returns {string} Formatted time string
  */
 function formatUptime(seconds) {
     const days = Math.floor(seconds / 86400);
     const hours = Math.floor((seconds % 86400) / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
-    return `${days}天 ${hours}小时 ${minutes}分 ${secs}秒`;
+    return `${days}d ${hours}h ${minutes}m ${secs}s`;
 }
 
 /**
- * HTML转义
- * @param {string} text - 要转义的文本
- * @returns {string} 转义后的文本
+ * HTML escape
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text
  */
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -25,9 +25,9 @@ function escapeHtml(text) {
 }
 
 /**
- * 显示提示消息
- * @param {string} message - 提示消息
- * @param {string} type - 消息类型 (info, success, error)
+ * Show toast message
+ * @param {string} message - Toast message
+ * @param {string} type - Message type (info, success, error)
  */
 function showToast(message, type = 'info') {
     const toast = document.createElement('div');
@@ -36,7 +36,7 @@ function showToast(message, type = 'info') {
         <div>${escapeHtml(message)}</div>
     `;
 
-    // 获取toast容器
+    // Get toast container
     const toastContainer = document.getElementById('toastContainer') || document.querySelector('.toast-container');
     if (toastContainer) {
         toastContainer.appendChild(toast);
@@ -48,31 +48,31 @@ function showToast(message, type = 'info') {
 }
 
 /**
- * 获取字段显示文案
- * @param {string} key - 字段键
- * @returns {string} 显示文案
+ * Get field display label
+ * @param {string} key - Field key
+ * @returns {string} Display label
  */
 function getFieldLabel(key) {
     const labelMap = {
-        'checkModelName': '检查模型名称 (选填)',
-        'checkHealth': '健康检查',
+        'checkModelName': 'Check model name (optional)',
+        'checkHealth': 'Health check',
         'OPENAI_API_KEY': 'OpenAI API Key',
         'OPENAI_BASE_URL': 'OpenAI Base URL',
         'CLAUDE_API_KEY': 'Claude API Key',
         'CLAUDE_BASE_URL': 'Claude Base URL',
-        'PROJECT_ID': '项目ID',
-        'GEMINI_OAUTH_CREDS_FILE_PATH': 'OAuth凭据文件路径',
-        'KIRO_OAUTH_CREDS_FILE_PATH': 'OAuth凭据文件路径',
-        'QWEN_OAUTH_CREDS_FILE_PATH': 'OAuth凭据文件路径'
+        'PROJECT_ID': 'Project ID',
+        'GEMINI_OAUTH_CREDS_FILE_PATH': 'OAuth credentials file path',
+        'KIRO_OAUTH_CREDS_FILE_PATH': 'OAuth credentials file path',
+        'QWEN_OAUTH_CREDS_FILE_PATH': 'OAuth credentials file path'
     };
     
     return labelMap[key] || key;
 }
 
 /**
- * 获取提供商类型的字段配置
- * @param {string} providerType - 提供商类型
- * @returns {Array} 字段配置数组
+ * Get field configuration for provider type
+ * @param {string} providerType - Provider type
+ * @returns {Array} Field configuration array
  */
 function getProviderTypeFields(providerType) {
     const fieldConfigs = {
@@ -121,45 +121,45 @@ function getProviderTypeFields(providerType) {
         'gemini-cli-oauth': [
             {
                 id: 'ProjectId',
-                label: '项目ID',
+                label: 'Project ID',
                 type: 'text',
-                placeholder: 'Google Cloud项目ID'
+                placeholder: 'Google Cloud Project ID'
             },
             {
                 id: 'GeminiOauthCredsFilePath',
-                label: 'OAuth凭据文件路径',
+                label: 'OAuth credentials file path',
                 type: 'text',
-                placeholder: '例如: ~/.gemini/oauth_creds.json'
+                placeholder: 'e.g. ~/.gemini/oauth_creds.json'
             }
         ],
         'claude-kiro-oauth': [
             {
                 id: 'KiroOauthCredsFilePath',
-                label: 'OAuth凭据文件路径',
+                label: 'OAuth credentials file path',
                 type: 'text',
-                placeholder: '例如: ~/.aws/sso/cache/kiro-auth-token.json'
+                placeholder: 'e.g. ~/.aws/sso/cache/kiro-auth-token.json'
             }
         ],
         'openai-qwen-oauth': [
             {
                 id: 'QwenOauthCredsFilePath',
-                label: 'OAuth凭据文件路径',
+                label: 'OAuth credentials file path',
                 type: 'text',
-                placeholder: '例如: ~/.qwen/oauth_creds.json'
+                placeholder: 'e.g. ~/.qwen/oauth_creds.json'
             }
         ],
         'gemini-antigravity': [
             {
                 id: 'ProjectId',
-                label: '项目ID (选填)',
+                label: 'Project ID (optional)',
                 type: 'text',
-                placeholder: 'Google Cloud项目ID (留空自动发现)'
+                placeholder: 'Google Cloud Project ID (leave empty to auto-discover)'
             },
             {
                 id: 'AntigravityOauthCredsFilePath',
-                label: 'OAuth凭据文件路径',
+                label: 'OAuth credentials file path',
                 type: 'text',
-                placeholder: '例如: ~/.antigravity/oauth_creds.json'
+                placeholder: 'e.g. ~/.antigravity/oauth_creds.json'
             }
         ]
     };
@@ -168,14 +168,14 @@ function getProviderTypeFields(providerType) {
 }
 
 /**
- * 调试函数：获取当前提供商统计信息
- * @param {Object} providerStats - 提供商统计对象
- * @returns {Object} 扩展的统计信息
+ * Debug function: Get current provider statistics
+ * @param {Object} providerStats - Provider statistics object
+ * @returns {Object} Extended statistics
  */
 function getProviderStats(providerStats) {
     return {
         ...providerStats,
-        // 添加计算得出的统计信息
+        // Add calculated statistics
         successRate: providerStats.totalRequests > 0 ? 
             ((providerStats.totalRequests - providerStats.totalErrors) / providerStats.totalRequests * 100).toFixed(2) + '%' : '0%',
         avgUsagePerProvider: providerStats.activeProviders > 0 ? 
@@ -185,7 +185,7 @@ function getProviderStats(providerStats) {
     };
 }
 
-// 导出所有工具函数
+// Export all utility functions
 export {
     formatUptime,
     escapeHtml,

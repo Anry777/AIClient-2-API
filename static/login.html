@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - AIClient2API</title>
+    <title>Login - AIClient2API</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <style>
         * {
@@ -187,25 +187,25 @@
         <div class="logo">
             <img src="/favicon.ico" alt="Logo" onerror="this.style.display='none'">
             <h1>AIClient2API</h1>
-            <p>请登录以继续</p>
+            <p>Please sign in to continue</p>
         </div>
 
         <form id="loginForm">
             <div class="form-group">
-                <label for="password">密码</label>
+                <label for="password">Password</label>
                 <input 
                     type="password" 
                     id="password" 
                     name="password" 
-                    placeholder="请输入密码"
+                    placeholder="Enter password"
                     autocomplete="current-password"
                     required
                 >
-                <div class="error-message" id="errorMessage">密码错误，请重试</div>
+                <div class="error-message" id="errorMessage">Incorrect password, please try again</div>
             </div>
 
             <button type="submit" class="login-button" id="loginButton">
-                登录
+                Sign in
             </button>
         </form>
 
@@ -220,7 +220,7 @@
         const errorMessage = document.getElementById('errorMessage');
         const loginButton = document.getElementById('loginButton');
 
-        // 检查是否已经登录
+        // Check if already logged in
         checkLoginStatus();
 
         loginForm.addEventListener('submit', async (e) => {
@@ -229,17 +229,17 @@
             const password = passwordInput.value.trim();
             
             if (!password) {
-                showError('请输入密码');
+                showError('Please enter a password');
                 return;
             }
 
-            // 禁用按钮并显示加载状态
+            // Disable button and show loading state
             loginButton.disabled = true;
-            loginButton.innerHTML = '<span class="loading"></span>登录中...';
+            loginButton.innerHTML = '<span class="loading"></span>Signing in...';
             errorMessage.classList.remove('show');
 
             try {
-                // 直接使用fetch进行登录请求（登录页面不需要token）
+                // Use fetch to send login request (login page doesn't need token)
                 const response = await fetch('/api/login', {
                     method: 'POST',
                     headers: {
@@ -253,23 +253,23 @@
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    // 登录成功，保存token
+                    // Login successful, save token
                     localStorage.setItem('authToken', data.token);
                     
-                    // 跳转到主页
+                    // Redirect to main page
                     window.location.href = '/';
                 } else {
-                    showError(data.message || '密码错误，请重试');
+                    showError(data.message || 'Incorrect password, please try again');
                     loginButton.disabled = false;
-                    loginButton.innerHTML = '登录';
+                    loginButton.innerHTML = 'Sign in';
                     passwordInput.value = '';
                     passwordInput.focus();
                 }
             } catch (error) {
-                console.error('登录错误:', error);
-                showError('登录失败，请检查网络连接');
+                console.error('Login error:', error);
+                showError('Login failed. Please check your network connection.');
                 loginButton.disabled = false;
-                loginButton.innerHTML = '登录';
+                loginButton.innerHTML = 'Sign in';
             }
         });
 
@@ -287,17 +287,17 @@
             const token = localStorage.getItem('authToken');
             
             if (token) {
-                // Token存在，跳转到主页
+                // Token exists, redirect to main page
                 window.location.href = '/';
             }
         }
 
-        // 监听输入，清除错误提示
+        // Listen for input, clear error message
         passwordInput.addEventListener('input', () => {
             errorMessage.classList.remove('show');
         });
 
-        // 页面加载时聚焦到密码输入框
+        // Focus on password input on page load
         passwordInput.focus();
     </script>
     </body>

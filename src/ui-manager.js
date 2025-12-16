@@ -22,11 +22,11 @@ import {
     formatSystemPath
 } from './provider-utils.js';
 
-// Token存储到本地文件中
+// Store tokens in local file
 const TOKEN_STORE_FILE = 'token-store.json';
 
 /**
- * 读取token存储文件
+ * Read token storage file
  */
 async function readTokenStore() {
     try {
@@ -34,45 +34,45 @@ async function readTokenStore() {
             const content = await fs.readFile(TOKEN_STORE_FILE, 'utf8');
             return JSON.parse(content);
         } else {
-            // 如果文件不存在，创建一个默认的token store
+            // If file doesn't exist, create a default token store
             await writeTokenStore({ tokens: {} });
             return { tokens: {} };
         }
     } catch (error) {
-        console.error('读取token存储文件失败:', error);
+        console.error('Failed to read token storage file:', error);
         return { tokens: {} };
     }
 }
 
 /**
- * 写入token存储文件
+ * Write token storage file
  */
 async function writeTokenStore(tokenStore) {
     try {
         await fs.writeFile(TOKEN_STORE_FILE, JSON.stringify(tokenStore, null, 2), 'utf8');
     } catch (error) {
-        console.error('写入token存储文件失败:', error);
+        console.error('Failed to write token storage file:', error);
     }
 }
 
 /**
- * 生成简单的token
+ * Generate simple token
  */
 function generateToken() {
     return crypto.randomBytes(32).toString('hex');
 }
 
 /**
- * 生成token过期时间
+ * Generate token expiry time
  */
 function getExpiryTime() {
     const now = Date.now();
-    const expiry = 60 * 60 * 1000; // 1小时
+    const expiry = 60 * 60 * 1000; // 1 hour
     return now + expiry;
 }
 
 /**
- * 验证简单token
+ * Verify simple token
  */
 async function verifyToken(token) {
     const tokenStore = await readTokenStore();
@@ -81,7 +81,7 @@ async function verifyToken(token) {
         return null;
     }
     
-    // 检查是否过期
+    // Check if expired
     if (Date.now() > tokenInfo.expiryTime) {
         await deleteToken(token);
         return null;
@@ -91,7 +91,7 @@ async function verifyToken(token) {
 }
 
 /**
- * 保存token到本地文件
+ * Save token to local file
  */
 async function saveToken(token, tokenInfo) {
     const tokenStore = await readTokenStore();
@@ -100,7 +100,7 @@ async function saveToken(token, tokenInfo) {
 }
 
 /**
- * 删除token
+ * Delete token
  */
 async function deleteToken(token) {
     const tokenStore = await readTokenStore();
@@ -111,7 +111,7 @@ async function deleteToken(token) {
 }
 
 /**
- * 清理过期的token
+ * Clean up expired tokens
  */
 async function cleanupExpiredTokens() {
     const tokenStore = await readTokenStore();
@@ -131,20 +131,20 @@ async function cleanupExpiredTokens() {
 }
 
 /**
- * 读取密码文件内容
+ * Read password file content
  */
 async function readPasswordFile() {
     try {
         const password = await fs.readFile('./pwd', 'utf8');
         return password.trim();
     } catch (error) {
-        console.error('读取密码文件失败:', error);
+        console.error('Failed to read password file:', error);
         return null;
     }
 }
 
 /**
- * 验证登录凭据
+ * Validate login credentials
  */
 async function validateCredentials(password) {
     const storedPassword = await readPasswordFile();
@@ -152,7 +152,7 @@ async function validateCredentials(password) {
 }
 
 /**
- * 解析请求体JSON
+ * Parse request body JSON
  */
 function parseRequestBody(req) {
     return new Promise((resolve, reject) => {
@@ -168,7 +168,7 @@ function parseRequestBody(req) {
                     resolve(JSON.parse(body));
                 }
             } catch (error) {
-                reject(new Error('无效的JSON格式'));
+                reject(new Error('Invalid JSON format'));
             }
         });
         req.on('error', reject);
@@ -176,7 +176,7 @@ function parseRequestBody(req) {
 }
 
 /**
- * 检查token验证
+ * Check token authentication
  */
 async function checkAuth(req) {
     const authHeader = req.headers.authorization;
@@ -192,12 +192,12 @@ async function checkAuth(req) {
 }
 
 /**
- * 处理登录请求
+ * Handle login request
  */
 async function handleLoginRequest(req, res) {
     if (req.method !== 'POST') {
         res.writeHead(405, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, message: '仅支持POST请求' }));
+        res.end(JSON.stringify({ success: false, message: 'Only POST requests are supported' }));
         return true;
     }
 
@@ -207,18 +207,18 @@ async function handleLoginRequest(req, res) {
         
         if (!password) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: false, message: '密码不能为空' }));
+            res.end(JSON.stringify({ success: false, message: 'Password cannot be empty' }));
             return true;
         }
 
         const isValid = await validateCredentials(password);
         
         if (isValid) {
-            // 生成简单token
+            // Generate simple token
             const token = generateToken();
             const expiryTime = getExpiryTime();
             
-            // 存储token信息到本地文件
+            // Store token info to local file
             await saveToken(token, {
                 username: 'admin',
                 loginTime: Date.now(),
@@ -228,37 +228,37 @@ async function handleLoginRequest(req, res) {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 success: true,
-                message: '登录成功',
+                message: 'Login successful',
                 token,
-                expiresIn: '1小时'
+                expiresIn: '1 hour'
             }));
         } else {
             res.writeHead(401, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 success: false,
-                message: '密码错误，请重试'
+                message: 'Incorrect password, please try again'
             }));
         }
     } catch (error) {
-        console.error('登录处理错误:', error);
+        console.error('Login processing error:', error);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
             success: false,
-            message: error.message || '服务器错误'
+            message: error.message || 'Server error'
         }));
     }
     return true;
 }
 
-// 定时清理过期token
-setInterval(cleanupExpiredTokens, 5 * 60 * 1000); // 每5分钟清理一次
+// Periodically clean up expired tokens
+setInterval(cleanupExpiredTokens, 5 * 60 * 1000); // Clean up every 5 minutes
 
-// 配置multer中间件
+// Configure multer middleware
 const storage = multer.diskStorage({
     destination: async (req, file, cb) => {
         try {
-            // multer在destination回调时req.body还未解析，先使用默认路径
-            // 实际的provider会在文件上传完成后从req.body中获取
+            // multer hasn't parsed req.body yet in destination callback, use default path first
+            // Actual provider will be obtained from req.body after file upload completes
             const uploadPath = path.join(process.cwd(), 'configs', 'temp');
             await fs.mkdir(uploadPath, { recursive: true });
             cb(null, uploadPath);
@@ -279,7 +279,7 @@ const fileFilter = (req, file, cb) => {
     if (allowedTypes.includes(ext)) {
         cb(null, true);
     } else {
-        cb(new Error('不支持的文件类型'), false);
+        cb(new Error('Unsupported file type'), false);
     }
 };
 
@@ -287,7 +287,7 @@ const upload = multer({
     storage,
     fileFilter,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5MB限制
+        fileSize: 5 * 1024 * 1024 // 5MB limit
     }
 });
 
@@ -328,9 +328,9 @@ export async function serveStaticFiles(pathParam, res) {
  * @returns {Promise<boolean>} - True if the request was handled by UI API
  */
 /**
- * 重载配置文件
- * 动态导入config-manager并重新初始化配置
- * @returns {Promise<Object>} 返回重载后的配置对象
+ * Reload configuration file
+ * Dynamically import config-manager and reinitialize configuration
+ * @returns {Promise<Object>} Returns reloaded config object
  */
 async function reloadConfig(providerPoolManager) {
     try {
@@ -349,7 +349,7 @@ async function reloadConfig(providerPoolManager) {
         Object.assign(CONFIG, newConfig);
         console.log('[UI API] Configuration reloaded:');
 
-        // Update initApiService - 清空并重新初始化服务实例
+        // Update initApiService - clear and reinitialize service instances
         Object.keys(serviceInstances).forEach(key => delete serviceInstances[key]);
         initApiService(CONFIG);
         
@@ -363,22 +363,22 @@ async function reloadConfig(providerPoolManager) {
 }
 
 export async function handleUIApiRequests(method, pathParam, req, res, currentConfig, providerPoolManager) {
-    // 处理登录接口
+    // Handle login endpoint
     if (method === 'POST' && pathParam === '/api/login') {
         const handled = await handleLoginRequest(req, res);
         if (handled) return true;
     }
 
-    // 健康检查接口（用于前端token验证）
+    // Health check endpoint (for frontend token verification)
     if (method === 'GET' && pathParam === '/api/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'ok', timestamp: Date.now() }));
         return true;
     }
     
-    // Handle UI management API requests (需要token验证，除了登录接口、健康检查和Events接口)
+    // Handle UI management API requests (requires token verification, except login, health check and events endpoints)
     if (pathParam.startsWith('/api/') && pathParam !== '/api/login' && pathParam !== '/api/health' && pathParam !== '/api/events') {
-        // 检查token验证
+        // Check token authentication
         const isAuth = await checkAuth(req);
         if (!isAuth) {
             res.writeHead(401, {
@@ -388,7 +388,7 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
             });
             res.end(JSON.stringify({
                 error: {
-                    message: '未授权访问，请先登录',
+                    message: 'Unauthorized access, please login first',
                     code: 'UNAUTHORIZED'
                 }
             }));
@@ -396,17 +396,17 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
         }
     }
 
-    // 文件上传API
+    // File upload API
     if (method === 'POST' && pathParam === '/api/upload-oauth-credentials') {
         const uploadMiddleware = upload.single('file');
         
         uploadMiddleware(req, res, async (err) => {
             if (err) {
-                console.error('文件上传错误:', err.message);
+                console.error('File upload error:', err.message);
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({
                     error: {
-                        message: err.message || '文件上传失败'
+                        message: err.message || 'File upload failed'
                     }
                 }));
                 return;
@@ -417,22 +417,22 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
                     res.writeHead(400, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({
                         error: {
-                            message: '没有文件被上传'
+                            message: 'No file was uploaded'
                         }
                     }));
                     return;
                 }
 
-                // multer执行完成后，表单字段已解析到req.body中
+                // After multer completes, form fields are parsed into req.body
                 const provider = req.body.provider || 'common';
                 const tempFilePath = req.file.path;
                 
-                // 根据实际的provider移动文件到正确的目录
+                // Move file to correct directory based on actual provider
                 let targetDir = path.join(process.cwd(), 'configs', provider);
                 
-                // 如果是kiro类型的凭证，需要再包裹一层文件夹
+                // If kiro type credentials, need to wrap in another folder
                 if (provider === 'kiro') {
-                    // 使用时间戳作为子文件夹名称，确保每个上传的文件都有独立的目录
+                    // Use timestamp as subfolder name to ensure each uploaded file has its own directory
                     const timestamp = Date.now();
                     const originalNameWithoutExt = path.parse(req.file.originalname).name;
                     const subFolder = `${timestamp}_${originalNameWithoutExt}`;
@@ -446,7 +446,7 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
                 
                 const relativePath = path.relative(process.cwd(), targetFilePath);
 
-                // 广播更新事件
+                // Broadcast update event
                 broadcastEvent('config_update', {
                     action: 'add',
                     filePath: relativePath,
@@ -454,23 +454,23 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
                     timestamp: new Date().toISOString()
                 });
 
-                console.log(`[UI API] OAuth凭据文件已上传: ${targetFilePath} (提供商: ${provider})`);
+                console.log(`[UI API] OAuth credentials file uploaded: ${targetFilePath} (provider: ${provider})`);
 
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({
                     success: true,
-                    message: '文件上传成功',
+                    message: 'File uploaded successfully',
                     filePath: relativePath,
                     originalName: req.file.originalname,
                     provider: provider
                 }));
 
             } catch (error) {
-                console.error('文件上传处理错误:', error);
+                console.error('File upload processing error:', error);
                 res.writeHead(500, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({
                     error: {
-                        message: '文件上传处理失败: ' + error.message
+                        message: 'File upload processing failed: ' + error.message
                     }
                 }));
             }
@@ -488,13 +488,13 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({
                     error: {
-                        message: '密码不能为空'
+                        message: 'Password cannot be empty'
                     }
                 }));
                 return true;
             }
 
-            // 写入密码到 pwd 文件
+            // Write password to pwd file
             const pwdFilePath = path.join(process.cwd(), 'pwd');
             await fs.writeFile(pwdFilePath, password.trim(), 'utf8');
             
@@ -503,7 +503,7 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 success: true,
-                message: '后台登录密码已更新'
+                message: 'Backend login password updated'
             }));
             return true;
         } catch (error) {
@@ -511,7 +511,7 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 error: {
-                    message: '更新密码失败: ' + error.message
+                    message: 'Failed to update password: ' + error.message
                 }
             }));
             return true;
@@ -577,7 +577,7 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
                     const relativePath = path.relative(process.cwd(), promptPath);
                     writeFileSync(promptPath, newConfig.systemPrompt, 'utf-8');
 
-                    // 广播更新事件
+                    // Broadcast update event
                     broadcastEvent('config_update', {
                         action: 'update',
                         filePath: relativePath,
@@ -626,7 +626,7 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
                 writeFileSync(configPath, JSON.stringify(configToSave, null, 2), 'utf-8');
                 console.log('[UI API] Configuration saved to config.json');
                 
-                // 广播更新事件
+                // Broadcast update event
                 broadcastEvent('config_update', {
                     action: 'update',
                     filePath: 'config.json',
@@ -1127,7 +1127,7 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
                 success: true,
-                message: `成功重置 ${resetCount} 个节点的健康状态`,
+                message: `Successfully reset health status of ${resetCount} nodes`,
                 resetCount,
                 totalCount: providers.length
             }));
@@ -1161,19 +1161,19 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
 
             console.log(`[UI API] Starting health check for ${providers.length} providers in ${providerType}`);
 
-            // 执行健康检测（强制检查，忽略 checkHealth 配置）
+            // Execute health check (force check, ignore checkHealth config)
             const results = [];
             for (const providerStatus of providers) {
                 const providerConfig = providerStatus.config;
                 try {
-                    // 传递 forceCheck = true 强制执行健康检查，忽略 checkHealth 配置
+                    // Pass forceCheck = true to force health check, ignore checkHealth config
                     const healthResult = await providerPoolManager._checkProviderHealth(providerType, providerConfig, true);
                     
                     if (healthResult === null) {
                         results.push({
                             uuid: providerConfig.uuid,
                             success: null,
-                            message: '健康检测不支持此提供商类型'
+                            message: 'Health check not supported for this provider type'
                         });
                         continue;
                     }

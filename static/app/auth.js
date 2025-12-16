@@ -1,6 +1,6 @@
-// 认证模块 - 处理token管理和API调用封装
+// Authentication module - handles token management and API call wrapping
 /**
- * 认证管理类
+ * Authentication manager class
  */
 class AuthManager {
     constructor() {
@@ -10,14 +10,14 @@ class AuthManager {
     }
 
     /**
-     * 获取存储的token
+     * Get stored token
      */
     getToken() {
         return localStorage.getItem(this.tokenKey);
     }
 
     /**
-     * 获取token过期时间
+     * Get token expiry time
      */
     getTokenExpiry() {
         const expiry = localStorage.getItem(this.expiryKey);
@@ -25,7 +25,7 @@ class AuthManager {
     }
 
     /**
-     * 检查token是否有效
+     * Check if token is valid
      */
     isTokenValid() {
         const token = this.getToken();
@@ -33,7 +33,7 @@ class AuthManager {
         
         if (!token) return false;
         
-        // 如果设置了过期时间，检查是否过期
+        // If expiry time is set, check if expired
         if (expiry && Date.now() > expiry) {
             this.clearToken();
             return false;
@@ -43,19 +43,19 @@ class AuthManager {
     }
 
     /**
-     * 保存token到本地存储
+     * Save token to local storage
      */
     saveToken(token, rememberMe = false) {
         localStorage.setItem(this.tokenKey, token);
         
         if (rememberMe) {
-            const expiryTime = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7天
+            const expiryTime = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 days
             localStorage.setItem(this.expiryKey, expiryTime.toString());
         }
     }
 
     /**
-     * 清除token
+     * Clear token
      */
     clearToken() {
         localStorage.removeItem(this.tokenKey);
@@ -63,7 +63,7 @@ class AuthManager {
     }
 
     /**
-     * 登出
+     * Logout
      */
     async logout() {
         this.clearToken();
@@ -72,7 +72,7 @@ class AuthManager {
 }
 
 /**
- * API调用封装类
+ * API call wrapper class
  */
 class ApiClient {
     constructor() {
@@ -81,7 +81,7 @@ class ApiClient {
     }
 
     /**
-     * 获取带认证的请求头
+     * Get authenticated request headers
      */
     getAuthHeaders() {
         const token = this.authManager.getToken();
@@ -94,7 +94,7 @@ class ApiClient {
     }
 
     /**
-     * 处理401错误重定向到登录页
+     * Handle 401 error redirect to login page
      */
     handleUnauthorized() {
         this.authManager.clearToken();
@@ -102,7 +102,7 @@ class ApiClient {
     }
 
     /**
-     * 通用API请求方法
+     * Generic API request method
      */
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}/api${endpoint}`;
@@ -119,10 +119,10 @@ class ApiClient {
         try {
             const response = await fetch(url, config);
             
-            // 如果是401错误，重定向到登录页
+            // If 401 error, redirect to login page
             if (response.status === 401) {
                 this.handleUnauthorized();
-                throw new Error('未授权访问');
+                throw new Error('Unauthorized');
             }
 
             const contentType = response.headers.get('content-type');
@@ -132,17 +132,17 @@ class ApiClient {
                 return await response.text();
             }
         } catch (error) {
-            if (error.message === '未授权访问') {
-                // 已经在handleUnauthorized中处理了重定向
+            if (error.message === 'Unauthorized') {
+                // Already handled redirect in handleUnauthorized
                 throw error;
             }
-            console.error('API请求错误:', error);
+            console.error('API request error:', error);
             throw error;
         }
     }
 
     /**
-     * GET请求
+     * GET request
      */
     async get(endpoint, params = {}) {
         const queryString = new URLSearchParams(params).toString();
@@ -151,7 +151,7 @@ class ApiClient {
     }
 
     /**
-     * POST请求
+     * POST request
      */
     async post(endpoint, data = {}) {
         return this.request(endpoint, {
@@ -161,7 +161,7 @@ class ApiClient {
     }
 
     /**
-     * PUT请求
+     * PUT request
      */
     async put(endpoint, data = {}) {
         return this.request(endpoint, {
@@ -171,28 +171,28 @@ class ApiClient {
     }
 
     /**
-     * DELETE请求
+     * DELETE request
      */
     async delete(endpoint) {
         return this.request(endpoint, { method: 'DELETE' });
     }
 
     /**
-     * POST请求（支持FormData上传）
+     * POST request (supports FormData upload)
      */
     async upload(endpoint, formData) {
         const url = `${this.baseURL}/api${endpoint}`;
         
-        // 获取认证token
+        // Get authentication token
         const token = this.authManager.getToken();
         const headers = {};
         
-        // 如果有token，添加Authorization头部
+        // If token exists, add Authorization header
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
 
-        // 对于FormData请求，不添加Content-Type头部，让浏览器自动设置
+        // For FormData requests, don't add Content-Type header, let browser set it automatically
         const config = {
             method: 'POST',
             headers,
@@ -202,10 +202,10 @@ class ApiClient {
         try {
             const response = await fetch(url, config);
             
-            // 如果是401错误，重定向到登录页
+            // If 401 error, redirect to login page
             if (response.status === 401) {
                 this.handleUnauthorized();
-                throw new Error('未授权访问');
+                throw new Error('Unauthorized');
             }
 
             const contentType = response.headers.get('content-type');
@@ -215,44 +215,44 @@ class ApiClient {
                 return await response.text();
             }
         } catch (error) {
-            if (error.message === '未授权访问') {
-                // 已经在handleUnauthorized中处理了重定向
+            if (error.message === 'Unauthorized') {
+                // Already handled redirect in handleUnauthorized
                 throw error;
             }
-            console.error('API请求错误:', error);
+            console.error('API request error:', error);
             throw error;
         }
     }
 }
 
 /**
- * 初始化认证检查
+ * Initialize authentication check
  */
 async function initAuth() {
     const authManager = new AuthManager();
     
-    // 检查是否已经有有效的token
+    // Check if there's already a valid token
     if (authManager.isTokenValid()) {
-        // 验证token是否仍然有效（发送一个测试请求）
+        // Verify if token is still valid (send a test request)
         try {
             const apiClient = new ApiClient();
             await apiClient.get('/health');
             return true;
         } catch (error) {
-            // Token无效，清除并重定向到登录页
+            // Token invalid, clear and redirect to login page
             authManager.clearToken();
             window.location.href = '/login.html';
             return false;
         }
     } else {
-        // 没有有效token，重定向到登录页
+        // No valid token, redirect to login page
         window.location.href = '/login.html';
         return false;
     }
 }
 
 /**
- * 登出函数
+ * Logout function
  */
 async function logout() {
     const authManager = new AuthManager();
@@ -260,7 +260,7 @@ async function logout() {
 }
 
 /**
- * 登录函数（供登录页面使用）
+ * Login function (for login page use)
  */
 async function login(password, rememberMe = false) {
     try {
@@ -270,15 +270,15 @@ async function login(password, rememberMe = false) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-            password,
-            rememberMe
+                password,
+                rememberMe
             })
         });
 
         const data = await response.json();
 
         if (data.success) {
-            // 保存token
+            // Save token
             const authManager = new AuthManager();
             authManager.saveToken(data.token, rememberMe);
             return { success: true };
@@ -286,20 +286,20 @@ async function login(password, rememberMe = false) {
             return { success: false, message: data.message };
         }
     } catch (error) {
-        console.error('登录错误:', error);
-        return { success: false, message: '登录失败，请检查网络连接' };
+        console.error('Login error:', error);
+        return { success: false, message: 'Login failed. Please check your network connection.' };
     }
 }
 
-// 导出实例
+// Export instances
 window.authManager = new AuthManager();
 window.apiClient = new ApiClient();
 window.initAuth = initAuth;
 window.logout = logout;
 window.login = login;
 
-// 导出认证管理器类和API客户端类供其他模块使用
+// Export AuthManager and ApiClient classes for use by other modules
 window.AuthManager = AuthManager;
 window.ApiClient = ApiClient;
 
-console.log('认证模块已加载');
+console.log('Auth module loaded');

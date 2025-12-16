@@ -1,9 +1,9 @@
-// 全局变量
+// Global variables
 let eventSource = null;
 let autoScroll = true;
 let logs = [];
 
-// 提供商统计全局变量
+// Provider statistics global variables
 let providerStats = {
     totalRequests: 0,
     totalErrors: 0,
@@ -11,10 +11,10 @@ let providerStats = {
     healthyProviders: 0,
     totalAccounts: 0,
     lastUpdateTime: null,
-    providerTypeStats: {} // 详细按类型统计
+    providerTypeStats: {} // Detailed statistics by type
 };
 
-// DOM元素
+// DOM elements
 const elements = {
     serverStatus: document.getElementById('serverStatus'),
     refreshBtn: document.getElementById('refreshBtn'),
@@ -29,12 +29,12 @@ const elements = {
     modelProvider: document.getElementById('modelProvider'),
 };
 
-// 定期刷新间隔
+// Periodic refresh intervals
 const REFRESH_INTERVALS = {
     SYSTEM_INFO: 10000
 };
 
-// 导出所有常量
+// Export all constants
 export {
     eventSource,
     autoScroll,
@@ -44,7 +44,7 @@ export {
     REFRESH_INTERVALS
 };
 
-// 更新函数
+// Update functions
 export function setEventSource(source) {
     eventSource = source;
 }

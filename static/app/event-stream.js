@@ -1,9 +1,9 @@
-// Server-Sent Events处理模块
+// Server-Sent Events handling module
 
 import { eventSource, setEventSource, elements, addLog, autoScroll } from './constants.js';
 
 /**
- * Server-Sent Events初始化
+ * Server-Sent Events initialization
  */
 function initEventStream() {
     if (eventSource) {
@@ -45,8 +45,8 @@ function initEventStream() {
 }
 
 /**
- * 添加日志条目
- * @param {Object} logData - 日志数据
+ * Add log entry
+ * @param {Object} logData - Log data
  */
 function addLogEntry(logData) {
     addLog(logData);
@@ -73,8 +73,8 @@ function addLogEntry(logData) {
 }
 
 /**
- * 更新服务器状态
- * @param {boolean} connected - 连接状态
+ * Update server status
+ * @param {boolean} connected - Connection status
  */
 function updateServerStatus(connected) {
     if (!elements.serverStatus) return;
@@ -86,39 +86,39 @@ function updateServerStatus(connected) {
     if (connected) {
         statusBadge.classList.remove('error');
         icon.style.color = 'var(--success-color)';
-        statusBadge.innerHTML = '<i class="fas fa-circle"></i> 已连接';
+        statusBadge.innerHTML = '<i class="fas fa-circle"></i> Connected';
     } else {
         statusBadge.classList.add('error');
         icon.style.color = 'var(--danger-color)';
-        statusBadge.innerHTML = '<i class="fas fa-circle"></i> 连接断开';
+        statusBadge.innerHTML = '<i class="fas fa-circle"></i> Disconnected';
     }
 }
 
 /**
- * 更新提供商状态
- * @param {Object} data - 提供商数据
+ * Update provider status
+ * @param {Object} data - Provider data
  */
 function updateProviderStatus(data) {
-    // 触发重新加载提供商列表
+    // Trigger reload of provider list
     if (typeof loadProviders === 'function') {
         loadProviders();
     }
 }
 
 /**
- * 处理提供商更新事件
- * @param {Object} data - 更新数据
+ * Handle provider update event
+ * @param {Object} data - Update data
  */
 function handleProviderUpdate(data) {
     if (data.action && data.providerType) {
-        // 如果当前打开的模态框是更新事件的提供商类型，则刷新该模态框
+        // If currently open modal is the provider type of the update event, refresh that modal
         const modal = document.querySelector('.provider-modal');
         if (modal && modal.getAttribute('data-provider-type') === data.providerType) {
             if (typeof refreshProviderConfig === 'function') {
                 refreshProviderConfig(data.providerType);
             }
         } else {
-            // 否则更新主界面的提供商列表
+            // Otherwise update the provider list in the main interface
             if (typeof loadProviders === 'function') {
                 loadProviders();
             }
@@ -126,10 +126,10 @@ function handleProviderUpdate(data) {
     }
 }
 
-// 导入工具函数
+// Import utility functions
 import { escapeHtml } from './utils.js';
 
-// 需要从其他模块导入的函数
+// Functions to be imported from other modules
 let loadProviders;
 let refreshProviderConfig;
 let loadConfigList;
@@ -144,36 +144,36 @@ export function setConfigLoaders(configLoader) {
 }
 
 /**
- * 处理配置更新事件
- * @param {Object} data - 更新数据
+ * Handle config update event
+ * @param {Object} data - Update data
  */
 function handleConfigUpdate(data) {
-    console.log('[ConfigUpdate] 收到配置更新事件:', data);
+    console.log('[ConfigUpdate] Received config update event:', data);
     
-    // 根据操作类型进行相应处理
+    // Handle according to operation type
     switch (data.action) {
         case 'delete':
-            // 文件删除事件，直接刷新配置文件列表
+            // File delete event, directly refresh config file list
             if (loadConfigList) {
                 loadConfigList();
-                console.log('[ConfigUpdate] 配置文件列表已刷新（文件删除）');
+                console.log('[ConfigUpdate] Config file list refreshed (file deleted)');
             }
             break;
             
         case 'add':
         case 'update':
-            // 文件添加或更新事件，刷新配置文件列表
+            // File add or update event, refresh config file list
             if (loadConfigList) {
                 loadConfigList();
-                console.log('[ConfigUpdate] 配置文件列表已刷新（文件更新）');
+                console.log('[ConfigUpdate] Config file list refreshed (file updated)');
             }
             break;
             
         default:
-            // 未知操作类型，也刷新列表以确保同步
+            // Unknown operation type, also refresh list to ensure sync
             if (loadConfigList) {
                 loadConfigList();
-                console.log('[ConfigUpdate] 配置文件列表已刷新（默认）');
+                console.log('[ConfigUpdate] Config file list refreshed (default)');
             }
             break;
     }

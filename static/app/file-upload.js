@@ -1,27 +1,27 @@
-// 文件上传功能模块
+// File upload functionality module
 
 import { showToast } from './utils.js';
 
 /**
- * 文件上传处理器类
+ * File upload handler class
  */
 class FileUploadHandler {
     constructor() {
-        this.currentProvider = 'gemini'; // 默认提供商
+        this.currentProvider = 'gemini'; // Default provider
         this.initEventListeners();
     }
 
     /**
-     * 初始化事件监听器
+     * Initialize event listeners
      */
     initEventListeners() {
-        // 监听所有上传按钮的点击事件
+        // Listen for all upload button click events
         document.addEventListener('click', (event) => {
             if (event.target.closest('.upload-btn')) {
                 const button = event.target.closest('.upload-btn');
                 const targetInputId = button.getAttribute('data-target');
                 if (targetInputId) {
-                    // 尝试从模态框获取 providerType
+                    // Try to get providerType from modal
                     const modal = button.closest('.provider-modal');
                     const providerType = modal ? modal.getAttribute('data-provider-type') : null;
                     this.handleFileUpload(button, targetInputId, providerType);
@@ -29,7 +29,7 @@ class FileUploadHandler {
             }
         });
 
-        // 监听提供商切换事件
+        // Listen for provider change events
         const modelProvider = document.getElementById('modelProvider');
         if (modelProvider) {
             modelProvider.addEventListener('change', (event) => {
@@ -39,17 +39,17 @@ class FileUploadHandler {
     }
 
     /**
-     * 更新当前提供商
-     * @param {string} provider - 选择的提供商
+     * Update current provider
+     * @param {string} provider - Selected provider
      */
     updateCurrentProvider(provider) {
         this.currentProvider = this.getProviderKey(provider);
     }
 
     /**
-     * 获取提供商对应的键名
-     * @param {string} provider - 提供商名称
-     * @returns {string} - 提供商标识
+     * Get provider key name
+     * @param {string} provider - Provider name
+     * @returns {string} - Provider identifier
      */
     getProviderKey(provider) {
         const providerMap = {
@@ -62,36 +62,36 @@ class FileUploadHandler {
     }
 
     /**
-     * 处理文件上传
-     * @param {HTMLElement} button - 上传按钮元素
-     * @param {string} targetInputId - 目标输入框ID
-     * @param {string} providerType - 提供商类型
+     * Handle file upload
+     * @param {HTMLElement} button - Upload button element
+     * @param {string} targetInputId - Target input ID
+     * @param {string} providerType - Provider type
      */
     async handleFileUpload(button, targetInputId, providerType) {
-        // 创建隐藏的文件输入元素
+        // Create hidden file input element
         const fileInput = this.createFileInput();
         
-        // 设置文件选择回调
+        // Set file selection callback
         fileInput.onchange = async (event) => {
             const file = event.target.files[0];
             
             if (file) {
-                // 只有文件被实际选择后才显示加载状态并上传
+                // Only show loading state and upload after file is actually selected
                 this.setButtonLoading(button, true);
                 await this.uploadFile(file, targetInputId, button, providerType);
             }
             
-            // 清理临时文件输入元素
+            // Clean up temporary file input element
             fileInput.remove();
         };
 
-        // 触发文件选择
+        // Trigger file selection
         fileInput.click();
     }
 
     /**
-     * 创建文件输入元素
-     * @returns {HTMLInputElement} - 文件输入元素
+     * Create file input element
+     * @returns {HTMLInputElement} - File input element
      */
     createFileInput() {
         const fileInput = document.createElement('input');
@@ -103,56 +103,56 @@ class FileUploadHandler {
     }
 
     /**
-     * 上传文件到服务器
-     * @param {File} file - 要上传的文件
-     * @param {string} targetInputId - 目标输入框ID
-     * @param {HTMLElement} button - 上传按钮
-     * @param {string} providerType - 提供商类型
+     * Upload file to server
+     * @param {File} file - File to upload
+     * @param {string} targetInputId - Target input ID
+     * @param {HTMLElement} button - Upload button
+     * @param {string} providerType - Provider type
      */
     async uploadFile(file, targetInputId, button, providerType) {
         try {
-            // 验证文件类型
+            // Validate file type
             if (!this.validateFileType(file)) {
-                showToast('不支持的文件类型，请选择 JSON、TXT、KEY、PEM、P12 或 PFX 文件', 'error');
+                showToast('Unsupported file type. Please select a JSON, TXT, KEY, PEM, P12, or PFX file.', 'error');
                 this.setButtonLoading(button, false);
                 return;
             }
 
-            // 验证文件大小 (5MB 限制)
+            // Validate file size (5MB limit)
             if (file.size > 5 * 1024 * 1024) {
-                showToast('文件大小不能超过 5MB', 'error');
+                showToast('File size must not exceed 5MB.', 'error');
                 this.setButtonLoading(button, false);
                 return;
             }
 
-            // 使用传入的 providerType 或回退到 currentProvider
+            // Use passed providerType or fall back to currentProvider
             const provider = providerType ? this.getProviderKey(providerType) : this.currentProvider;
 
-            // 创建 FormData
+            // Create FormData
             const formData = new FormData();
             formData.append('file', file);
             formData.append('provider', provider);
             formData.append('targetInputId', targetInputId);
 
-            // 使用封装接口发送上传请求
+            // Use wrapped interface to send upload request
             const result = await window.apiClient.upload('/upload-oauth-credentials', formData);
             
-            // 成功上传，设置文件路径到输入框
+            // Upload successful, set file path to input
             this.setFilePathToInput(targetInputId, result.filePath);
-            showToast('文件上传成功', 'success');
+            showToast('File uploaded successfully', 'success');
 
         } catch (error) {
-            console.error('文件上传错误:', error);
-            showToast('文件上传失败: ' + error.message, 'error');
+            console.error('File upload error:', error);
+            showToast('File upload failed: ' + error.message, 'error');
         } finally {
             this.setButtonLoading(button, false);
         }
     }
 
     /**
-     * 验证文件类型
-     * @param {File} file - 要验证的文件
-     * @returns {boolean} - 是否为有效文件类型
+     * Validate file type
+     * @param {File} file - File to validate
+     * @returns {boolean} - Whether it's a valid file type
      */
     validateFileType(file) {
         const allowedExtensions = ['.json', '.txt', '.key', '.pem', '.p12', '.pfx'];
@@ -161,9 +161,9 @@ class FileUploadHandler {
     }
 
     /**
-     * 设置按钮加载状态
-     * @param {HTMLElement} button - 按钮元素
-     * @param {boolean} isLoading - 是否加载中
+     * Set button loading state
+     * @param {HTMLElement} button - Button element
+     * @param {boolean} isLoading - Whether loading
      */
     setButtonLoading(button, isLoading) {
         const icon = button.querySelector('i');
@@ -177,38 +177,38 @@ class FileUploadHandler {
     }
 
     /**
-     * 设置文件路径到输入框
-     * @param {string} inputId - 输入框ID
-     * @param {string} filePath - 文件路径
+     * Set file path to input
+     * @param {string} inputId - Input ID
+     * @param {string} filePath - File path
      */
     setFilePathToInput(inputId, filePath) {
-        // console.log('设置文件路径到输入框:', inputId, filePath);
+        // console.log('Setting file path to input:', inputId, filePath);
         let input = document.getElementById(inputId);
         if (input) {
-            // console.log('输入框元素存在，设置文件路径:', filePath);
+            // console.log('Input element exists, setting file path:', filePath);
             input.value = filePath;
-            // 同时更新data-config-value属性（用于编辑模式）
+            // Also update data-config-value attribute (for edit mode)
             if (input.hasAttribute('data-config-value')) {
                 input.setAttribute('data-config-value', filePath);
-                console.log('更新data-config-value属性:', filePath);
+                console.log('Updated data-config-value:', filePath);
             }
-            // 触发输入事件，通知其他监听器
+            // Trigger input event to notify other listeners
             input.dispatchEvent(new Event('input', { bubbles: true }));
         } else {
-            console.error('无法找到输入框:', inputId);
+            console.error('Input not found:', inputId);
         }
     }
 }
 
 /**
- * 初始化文件上传功能
+ * Initialize file upload functionality
  */
 function initFileUpload() {
-    // 文件上传功能是自初始化的单例
-    console.log('文件上传功能已初始化');
+    // File upload functionality is a self-initializing singleton
+    console.log('File upload initialized');
 }
 
-// 导出单例实例
+// Export singleton instance
 const fileUploadHandler = new FileUploadHandler();
 
 export {

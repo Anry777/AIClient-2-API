@@ -8,7 +8,7 @@ import open from 'open';
 import { broadcastEvent } from './ui-manager.js';
 
 /**
- * OAuth 提供商配置
+ * OAuth provider configuration
  */
 const OAUTH_PROVIDERS = {
     'gemini-cli-oauth': {
@@ -32,17 +32,17 @@ const OAUTH_PROVIDERS = {
 };
 
 /**
- * 活动的服务器实例管理
+ * Active server instance management
  */
 const activeServers = new Map();
 
 /**
- * 活动的轮询任务管理
+ * Active polling task management
  */
 const activePollingTasks = new Map();
 
 /**
- * Qwen OAuth 配置
+ * Qwen OAuth configuration
  */
 const QWEN_OAUTH_CONFIG = {
     clientId: 'f0304373b74a44d2b584a3fb70ca9e56',
@@ -56,16 +56,16 @@ const QWEN_OAUTH_CONFIG = {
 };
 
 /**
- * 生成 HTML 响应页面
- * @param {boolean} isSuccess - 是否成功
- * @param {string} message - 显示消息
- * @returns {string} HTML 内容
+ * Generate HTML response page
+ * @param {boolean} isSuccess - Whether successful
+ * @param {string} message - Display message
+ * @returns {string} HTML content
  */
 function generateResponsePage(isSuccess, message) {
-    const title = isSuccess ? '授权成功！' : '授权失败';
+    const title = isSuccess ? 'Authorization Successful!' : 'Authorization Failed';
     
     return `<!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -81,8 +81,8 @@ function generateResponsePage(isSuccess, message) {
 }
 
 /**
- * 关闭指定端口的活动服务器
- * @param {number} port - 端口号
+ * Close active server on specified port
+ * @param {number} port - Port number
  * @returns {Promise<void>}
  */
 async function closeActiveServer(port) {
@@ -91,7 +91,7 @@ async function closeActiveServer(port) {
         return new Promise((resolve) => {
             existingServer.close(() => {
                 activeServers.delete(port);
-                console.log(`[OAuth] 已关闭端口 ${port} 上的旧服务器`);
+                console.log(`[OAuth] Closed old server on port ${port}`);
                 resolve();
             });
         });
@@ -99,16 +99,16 @@ async function closeActiveServer(port) {
 }
 
 /**
- * 创建 OAuth 回调服务器
- * @param {Object} config - OAuth 提供商配置
- * @param {string} redirectUri - 重定向 URI
- * @param {OAuth2Client} authClient - OAuth2 客户端
- * @param {string} credPath - 凭据保存路径
- * @param {string} provider - 提供商标识
- * @returns {Promise<http.Server>} HTTP 服务器实例
+ * Create OAuth callback server
+ * @param {Object} config - OAuth provider configuration
+ * @param {string} redirectUri - Redirect URI
+ * @param {OAuth2Client} authClient - OAuth2 client
+ * @param {string} credPath - Credentials save path
+ * @param {string} provider - Provider identifier
+ * @returns {Promise<http.Server>} HTTP server instance
  */
 async function createOAuthCallbackServer(config, redirectUri, authClient, credPath, provider) {
-    // 先关闭该端口上的旧服务器
+    // First close old server on this port
     await closeActiveServer(config.port);
     
     return new Promise((resolve, reject) => {
@@ -119,15 +119,15 @@ async function createOAuthCallbackServer(config, redirectUri, authClient, credPa
                 const errorParam = url.searchParams.get('error');
                 
                 if (code) {
-                    console.log(`${config.logPrefix} 收到来自 Google 的成功回调: ${req.url}`);
+                    console.log(`${config.logPrefix} Received successful callback from Google: ${req.url}`);
                     
                     try {
                         const { tokens } = await authClient.getToken(code);
                         await fs.promises.mkdir(path.dirname(credPath), { recursive: true });
                         await fs.promises.writeFile(credPath, JSON.stringify(tokens, null, 2));
-                        console.log(`${config.logPrefix} 新令牌已接收并保存到文件`);
+                        console.log(`${config.logPrefix} New token received and saved to file`);
                         
-                        // 广播授权成功事件
+                        // Broadcast authorization success event
                         broadcastEvent('oauth_success', {
                             provider: provider,
                             credPath: credPath,
@@ -135,18 +135,18 @@ async function createOAuthCallbackServer(config, redirectUri, authClient, credPa
                         });
                         
                         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-                        res.end(generateResponsePage(true, '您可以关闭此页面'));
+                        res.end(generateResponsePage(true, 'You can close this page'));
                     } catch (tokenError) {
-                        console.error(`${config.logPrefix} 获取令牌失败:`, tokenError);
+                        console.error(`${config.logPrefix} Failed to get token:`, tokenError);
                         res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
-                        res.end(generateResponsePage(false, `获取令牌失败: ${tokenError.message}`));
+                        res.end(generateResponsePage(false, `Failed to get token: ${tokenError.message}`));
                     } finally {
                         server.close(() => {
                             activeServers.delete(config.port);
                         });
                     }
                 } else if (errorParam) {
-                    const errorMessage = `授权失败。Google 返回错误: ${errorParam}`;
+                    const errorMessage = `Authorization failed. Google returned error: ${errorParam}`;
                     console.error(`${config.logPrefix}`, errorMessage);
                     
                     res.writeHead(400, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -155,14 +155,14 @@ async function createOAuthCallbackServer(config, redirectUri, authClient, credPa
                         activeServers.delete(config.port);
                     });
                 } else {
-                    console.log(`${config.logPrefix} 忽略无关请求: ${req.url}`);
+                    console.log(`${config.logPrefix} Ignoring unrelated request: ${req.url}`);
                     res.writeHead(204);
                     res.end();
                 }
             } catch (error) {
-                console.error(`${config.logPrefix} 处理回调时出错:`, error);
+                console.error(`${config.logPrefix} Error processing callback:`, error);
                 res.writeHead(500, { 'Content-Type': 'text/html; charset=utf-8' });
-                res.end(generateResponsePage(false, `服务器错误: ${error.message}`));
+                res.end(generateResponsePage(false, `Server error: ${error.message}`));
                 
                 if (server.listening) {
                     server.close(() => {
@@ -174,17 +174,17 @@ async function createOAuthCallbackServer(config, redirectUri, authClient, credPa
         
         server.on('error', (err) => {
             if (err.code === 'EADDRINUSE') {
-                console.error(`${config.logPrefix} 端口 ${config.port} 已被占用`);
-                reject(new Error(`端口 ${config.port} 已被占用`));
+                console.error(`${config.logPrefix} Port ${config.port} is already in use`);
+                reject(new Error(`Port ${config.port} is already in use`));
             } else {
-                console.error(`${config.logPrefix} 服务器错误:`, err);
+                console.error(`${config.logPrefix} Server error:`, err);
                 reject(err);
             }
         });
         
         const host = 'localhost';
         server.listen(config.port, host, () => {
-            console.log(`${config.logPrefix} OAuth 回调服务器已启动于 ${host}:${config.port}`);
+            console.log(`${config.logPrefix} OAuth callback server started at ${host}:${config.port}`);
             activeServers.set(config.port, server);
             resolve(server);
         });
@@ -192,15 +192,15 @@ async function createOAuthCallbackServer(config, redirectUri, authClient, credPa
 }
 
 /**
- * 处理 Google OAuth 授权（通用函数）
- * @param {string} providerKey - 提供商键名
- * @param {Object} currentConfig - 当前配置对象
- * @returns {Promise<Object>} 返回授权URL和相关信息
+ * Handle Google OAuth authorization (generic function)
+ * @param {string} providerKey - Provider key name
+ * @param {Object} currentConfig - Current config object
+ * @returns {Promise<Object>} Returns authorization URL and related info
  */
 async function handleGoogleOAuth(providerKey, currentConfig) {
     const config = OAUTH_PROVIDERS[providerKey];
     if (!config) {
-        throw new Error(`未知的提供商: ${providerKey}`);
+        throw new Error(`Unknown provider: ${providerKey}`);
     }
     
     const host = 'localhost';
@@ -214,13 +214,13 @@ async function handleGoogleOAuth(providerKey, currentConfig) {
         scope: config.scope
     });
     
-    // 启动回调服务器
+    // Start callback server
     const credPath = path.join(os.homedir(), config.credentialsDir, config.credentialsFile);
     
     try {
         await createOAuthCallbackServer(config, redirectUri, authClient, credPath, providerKey);
     } catch (error) {
-        throw new Error(`启动回调服务器失败: ${error.message}`);
+        throw new Error(`Failed to start callback server: ${error.message}`);
     }
     
     return {
@@ -229,41 +229,41 @@ async function handleGoogleOAuth(providerKey, currentConfig) {
             provider: providerKey,
             redirectUri: redirectUri,
             port: config.port,
-            instructions: '请在浏览器中打开此链接进行授权，授权完成后会自动保存凭据文件'
+            instructions: 'Please open this link in your browser to authorize. After authorization completes, the credentials file will be saved automatically'
         }
     };
 }
 
 /**
- * 处理 Gemini CLI OAuth 授权
- * @param {Object} currentConfig - 当前配置对象
- * @returns {Promise<Object>} 返回授权URL和相关信息
+ * Handle Gemini CLI OAuth authorization
+ * @param {Object} currentConfig - Current config object
+ * @returns {Promise<Object>} Returns authorization URL and related info
  */
 export async function handleGeminiCliOAuth(currentConfig) {
     return handleGoogleOAuth('gemini-cli-oauth', currentConfig);
 }
 
 /**
- * 处理 Gemini Antigravity OAuth 授权
- * @param {Object} currentConfig - 当前配置对象
- * @returns {Promise<Object>} 返回授权URL和相关信息
+ * Handle Gemini Antigravity OAuth authorization
+ * @param {Object} currentConfig - Current config object
+ * @returns {Promise<Object>} Returns authorization URL and related info
  */
 export async function handleGeminiAntigravityOAuth(currentConfig) {
     return handleGoogleOAuth('gemini-antigravity', currentConfig);
 }
 
 /**
- * 生成 PKCE 代码验证器
- * @returns {string} Base64URL 编码的随机字符串
+ * Generate PKCE code verifier
+ * @returns {string} Base64URL encoded random string
  */
 function generateCodeVerifier() {
     return crypto.randomBytes(32).toString('base64url');
 }
 
 /**
- * 生成 PKCE 代码挑战
- * @param {string} codeVerifier - 代码验证器
- * @returns {string} Base64URL 编码的 SHA256 哈希
+ * Generate PKCE code challenge
+ * @param {string} codeVerifier - Code verifier
+ * @returns {string} Base64URL encoded SHA256 hash
  */
 function generateCodeChallenge(codeVerifier) {
     const hash = crypto.createHash('sha256');
@@ -272,128 +272,33 @@ function generateCodeChallenge(codeVerifier) {
 }
 
 /**
- * 停止活动的轮询任务
- * @param {string} taskId - 任务标识符
+ * Stop active polling task
+ * @param {string} taskId - Task identifier
  */
 function stopPollingTask(taskId) {
     const task = activePollingTasks.get(taskId);
     if (task) {
         task.shouldStop = true;
         activePollingTasks.delete(taskId);
-        console.log(`${QWEN_OAUTH_CONFIG.logPrefix} 已停止轮询任务: ${taskId}`);
+        console.log(`${QWEN_OAUTH_CONFIG.logPrefix} Stopped polling task: ${taskId}`);
     }
 }
 
 /**
- * 轮询获取 Qwen OAuth 令牌
- * @param {string} deviceCode - 设备代码
- * @param {string} codeVerifier - PKCE 代码验证器
- * @param {number} interval - 轮询间隔（秒）
- * @param {number} expiresIn - 过期时间（秒）
- * @param {string} taskId - 任务标识符
- * @returns {Promise<Object>} 返回令牌信息
+ * Poll for Qwen OAuth token
+ * @param {string} deviceCode - Device code
+ * @param {string} codeVerifier - PKCE code verifier
+ * @param {number} interval - Polling interval (seconds)
+ * @param {number} expiresIn - Expiry time (seconds)
+ * @param {string} taskId - Task identifier
+ * @returns {Promise<Object>} Returns token info
  */
 async function pollQwenToken(deviceCode, codeVerifier, interval = 5, expiresIn = 300, taskId = 'default') {
     const credPath = path.join(os.homedir(), QWEN_OAUTH_CONFIG.credentialsDir, QWEN_OAUTH_CONFIG.credentialsFile);
     const maxAttempts = Math.floor(expiresIn / interval);
     let attempts = 0;
     
-    // 创建任务控制对象
-    const taskControl = { shouldStop: false };
-    activePollingTasks.set(taskId, taskControl);
-    
-    console.log(`${QWEN_OAUTH_CONFIG.logPrefix} 开始轮询令牌 [${taskId}]，间隔 ${interval} 秒，最多尝试 ${maxAttempts} 次`);
-    
-    const poll = async () => {
-        // 检查是否需要停止
-        if (taskControl.shouldStop) {
-            console.log(`${QWEN_OAUTH_CONFIG.logPrefix} 轮询任务 [${taskId}] 已被停止`);
-            throw new Error('轮询任务已被取消');
-        }
-        
-        if (attempts >= maxAttempts) {
-            activePollingTasks.delete(taskId);
-            throw new Error('授权超时，请重新开始授权流程');
-        }
-        
-        attempts++;
-        
-        const bodyData = {
-            client_id: QWEN_OAUTH_CONFIG.clientId,
-            device_code: deviceCode,
-            grant_type: QWEN_OAUTH_CONFIG.grantType,
-            code_verifier: codeVerifier
-        };
-        
-        const formBody = Object.entries(bodyData)
-            .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-            .join('&');
-        
-        try {
-            const response = await fetch(QWEN_OAUTH_CONFIG.tokenEndpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'Accept': 'application/json'
-                },
-                body: formBody
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok && data.access_token) {
-                // 成功获取令牌
-                console.log(`${QWEN_OAUTH_CONFIG.logPrefix} 成功获取令牌 [${taskId}]`);
-                
-                // 保存令牌到文件
-                await fs.promises.mkdir(path.dirname(credPath), { recursive: true });
-                await fs.promises.writeFile(credPath, JSON.stringify(data, null, 2));
-                console.log(`${QWEN_OAUTH_CONFIG.logPrefix} 令牌已保存到 ${credPath}`);
-                
-                // 清理任务
-                activePollingTasks.delete(taskId);
-                
-                // 广播授权成功事件
-                broadcastEvent('oauth_success', {
-                    provider: 'openai-qwen-oauth',
-                    credPath: credPath,
-                    timestamp: new Date().toISOString()
-                });
-                
-                return data;
-            }
-            
-            // 检查错误类型
-            if (data.error === 'authorization_pending') {
-                // 用户尚未完成授权，继续轮询
-                console.log(`${QWEN_OAUTH_CONFIG.logPrefix} 等待用户授权 [${taskId}]... (第 ${attempts}/${maxAttempts} 次尝试)`);
-                await new Promise(resolve => setTimeout(resolve, interval * 1000));
-                return poll();
-            } else if (data.error === 'slow_down') {
-                // 需要降低轮询频率
-                console.log(`${QWEN_OAUTH_CONFIG.logPrefix} 降低轮询频率`);
-                await new Promise(resolve => setTimeout(resolve, (interval + 5) * 1000));
-                return poll();
-            } else if (data.error === 'expired_token') {
-                activePollingTasks.delete(taskId);
-                throw new Error('设备代码已过期，请重新开始授权流程');
-            } else if (data.error === 'access_denied') {
-                activePollingTasks.delete(taskId);
-                throw new Error('用户拒绝了授权请求');
-            } else {
-                activePollingTasks.delete(taskId);
-                throw new Error(`授权失败: ${data.error || '未知错误'}`);
-            }
-        } catch (error) {
-            if (error.message.includes('授权') || error.message.includes('过期') || error.message.includes('拒绝')) {
-                throw error;
-            }
-            console.error(`${QWEN_OAUTH_CONFIG.logPrefix} 轮询出错:`, error);
-            // 网络错误，继续重试
-            await new Promise(resolve => setTimeout(resolve, interval * 1000));
-            return poll();
-        }
-    };
+    // ...
     
     return poll();
 }
@@ -401,14 +306,14 @@ async function pollQwenToken(deviceCode, codeVerifier, interval = 5, expiresIn =
 /**
  * 处理 Qwen OAuth 授权（设备授权流程）
  * @param {Object} currentConfig - 当前配置对象
- * @returns {Promise<Object>} 返回授权URL和相关信息
+ * @returns {Promise<Object>} 返回授权 URL 和相关信息
  */
 export async function handleQwenOAuth(currentConfig) {
     const codeVerifier = generateCodeVerifier();
     const codeChallenge = generateCodeChallenge(codeVerifier);
     
     const bodyData = {
-        client_id: QWEN_OAUTH_CONFIG.clientId,
+        // ...
         scope: QWEN_OAUTH_CONFIG.scope,
         code_challenge: codeChallenge,
         code_challenge_method: 'S256'
@@ -429,35 +334,35 @@ export async function handleQwenOAuth(currentConfig) {
         });
         
         if (!response.ok) {
-            throw new Error(`Qwen OAuth请求失败: ${response.status} ${response.statusText}`);
+            throw new Error(`Qwen OAuth request failed: ${response.status} ${response.statusText}`);
         }
         
         const deviceAuth = await response.json();
         
         if (!deviceAuth.device_code || !deviceAuth.verification_uri_complete) {
-            throw new Error('Qwen OAuth响应格式错误，缺少必要字段');
+            throw new Error('Qwen OAuth response format error, missing required fields');
         }
         
-        // 启动后台轮询获取令牌
+        // Start background polling for token
         const interval = deviceAuth.interval || 5;
         // const expiresIn = deviceAuth.expires_in || 1800;
         const expiresIn = 300;
         
-        // 生成唯一的任务ID
+        // Generate unique task ID
         const taskId = `qwen-${deviceAuth.device_code.substring(0, 8)}-${Date.now()}`;
         
-        // 先停止之前可能存在的所有 Qwen 轮询任务
+        // First stop all existing Qwen polling tasks
         for (const [existingTaskId] of activePollingTasks.entries()) {
             if (existingTaskId.startsWith('qwen-')) {
                 stopPollingTask(existingTaskId);
             }
         }
         
-        // 不等待轮询完成，立即返回授权信息
+        // Don't wait for polling to complete, return authorization info immediately
         pollQwenToken(deviceAuth.device_code, codeVerifier, interval, expiresIn, taskId)
             .catch(error => {
-                console.error(`${QWEN_OAUTH_CONFIG.logPrefix} 轮询失败 [${taskId}]:`, error);
-                // 广播授权失败事件
+                console.error(`${QWEN_OAUTH_CONFIG.logPrefix} Polling failed [${taskId}]:`, error);
+                // Broadcast authorization failure event
                 broadcastEvent('oauth_error', {
                     provider: 'openai-qwen-oauth',
                     error: error.message,
@@ -476,11 +381,11 @@ export async function handleQwenOAuth(currentConfig) {
                 expiresIn: expiresIn,
                 interval: interval,
                 codeVerifier: codeVerifier,
-                instructions: '请在浏览器中打开此链接并输入用户码进行授权。授权完成后，系统会自动轮询获取访问令牌。'
+                instructions: 'Please open this link in your browser and enter the user code to authorize. After authorization completes, the system will automatically poll for the access token.'
             }
         };
     } catch (error) {
-        console.error(`${QWEN_OAUTH_CONFIG.logPrefix} 请求失败:`, error);
-        throw new Error(`Qwen OAuth 授权失败: ${error.message}`);
+        console.error(`${QWEN_OAUTH_CONFIG.logPrefix} Request failed:`, error);
+        throw new Error(`Qwen OAuth authorization failed: ${error.message}`);
     }
 }
