@@ -10,6 +10,7 @@ import { serviceInstances } from './adapter.js';
 import { initApiService } from './service-manager.js';
 import { handleGeminiCliOAuth, handleGeminiAntigravityOAuth, handleQwenOAuth } from './oauth-handlers.js';
 import {
+     PROVIDER_MAPPINGS,
     generateUUID,
     normalizePath,
     getFileName,
@@ -793,6 +794,13 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
 
             // Update provider pool manager if available
             if (providerPoolManager) {
+                // Clear pending saves to prevent overwriting the file
+                if (providerPoolManager.saveTimer) {
+                    clearTimeout(providerPoolManager.saveTimer);
+                    providerPoolManager.saveTimer = null;
+                }
+                providerPoolManager.pendingSaves.clear();
+                
                 providerPoolManager.providerPools = providerPools;
                 providerPoolManager.initializeProviderStatus();
             }
@@ -890,6 +898,13 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
 
             // Update provider pool manager if available
             if (providerPoolManager) {
+                // Clear pending saves to prevent overwriting the file
+                if (providerPoolManager.saveTimer) {
+                    clearTimeout(providerPoolManager.saveTimer);
+                    providerPoolManager.saveTimer = null;
+                }
+                providerPoolManager.pendingSaves.clear();
+                
                 providerPoolManager.providerPools = providerPools;
                 providerPoolManager.initializeProviderStatus();
             }
@@ -960,8 +975,49 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
             writeFileSync(filePath, JSON.stringify(providerPools, null, 2), 'utf8');
             console.log(`[UI API] Deleted provider ${providerUuid} from ${providerType}`);
 
+            // Optionally delete creds file if it is a managed config under configs/**
+            try {
+                const mapping = PROVIDER_MAPPINGS.find(m => m.providerType === providerType);
+                const credPathKey = mapping?.credPathKey;
+                const credPath = credPathKey ? deletedProvider?.[credPathKey] : null;
+
+                if (credPath) {
+                    const normalizedCredPath = normalizePath(String(credPath));
+                    const relCredPath = normalizedCredPath.replace(/^\.\//, '').replace(/^\.\\/, '');
+                    const isManagedCreds = relCredPath.startsWith('configs/');
+
+                    if (isManagedCreds) {
+                        const isUsedElsewhere = Object.values(providerPools).some((pool) => {
+                            if (!Array.isArray(pool)) return false;
+                            return pool.some((p) => {
+                                if (!p || typeof p !== 'object') return false;
+                                const keys = Object.keys(p).filter(k => k.endsWith('_CREDS_FILE_PATH'));
+                                return keys.some((k) => pathsEqual(p[k], credPath));
+                            });
+                        });
+
+                        if (!isUsedElsewhere) {
+                            const absCredPath = path.resolve(process.cwd(), relCredPath);
+                            if (existsSync(absCredPath)) {
+                                await fs.unlink(absCredPath);
+                                console.log(`[UI API] Deleted creds file: ${relCredPath}`);
+                            }
+                        }
+                    }
+                }
+            } catch (cleanupError) {
+                console.warn('[UI API] Failed to cleanup creds file:', cleanupError.message);
+            }
+
             // Update provider pool manager if available
             if (providerPoolManager) {
+                // Clear pending saves to prevent overwriting the file
+                if (providerPoolManager.saveTimer) {
+                    clearTimeout(providerPoolManager.saveTimer);
+                    providerPoolManager.saveTimer = null;
+                }
+                providerPoolManager.pendingSaves.clear();
+                
                 providerPoolManager.providerPools = providerPools;
                 providerPoolManager.initializeProviderStatus();
             }
@@ -1032,6 +1088,13 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
 
             // Update provider pool manager if available
             if (providerPoolManager) {
+                // Clear pending saves to prevent overwriting the file
+                if (providerPoolManager.saveTimer) {
+                    clearTimeout(providerPoolManager.saveTimer);
+                    providerPoolManager.saveTimer = null;
+                }
+                providerPoolManager.pendingSaves.clear();
+                
                 providerPoolManager.providerPools = providerPools;
                 
                 // Call the appropriate method
@@ -1111,6 +1174,13 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
 
             // Update provider pool manager if available
             if (providerPoolManager) {
+                // Clear pending saves to prevent overwriting the file
+                if (providerPoolManager.saveTimer) {
+                    clearTimeout(providerPoolManager.saveTimer);
+                    providerPoolManager.saveTimer = null;
+                }
+                providerPoolManager.pendingSaves.clear();
+                
                 providerPoolManager.providerPools = providerPools;
                 providerPoolManager.initializeProviderStatus();
             }
@@ -1548,6 +1618,13 @@ export async function handleUIApiRequests(method, pathParam, req, res, currentCo
 
             // Update provider pool manager if available
             if (providerPoolManager) {
+                // Clear pending saves to prevent overwriting the file
+                if (providerPoolManager.saveTimer) {
+                    clearTimeout(providerPoolManager.saveTimer);
+                    providerPoolManager.saveTimer = null;
+                }
+                providerPoolManager.pendingSaves.clear();
+                
                 providerPoolManager.providerPools = providerPools;
                 providerPoolManager.initializeProviderStatus();
             }

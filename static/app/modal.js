@@ -855,10 +855,8 @@ async function deleteProvider(uuid, event) {
     
     try {
         await window.apiClient.delete(`/providers/${encodeURIComponent(providerType)}/${uuid}`);
-        await window.apiClient.post('/reload-config');
         showToast('Provider configuration deleted successfully', 'success');
-        // 重新获取最新配置
-        await refreshProviderConfig(providerType);
+        // Обновление произойдет автоматически через событие config_update
     } catch (error) {
         console.error('Failed to delete provider:', error);
         showToast('Delete failed: ' + error.message, 'error');

@@ -22,6 +22,8 @@ let providerPoolManager = null;
  * @returns {Promise<Object>} 更新后的 providerPools 对象
  */
 async function autoLinkProviderConfigs(config) {
+    const poolsFilePath = config.PROVIDER_POOLS_FILE_PATH || 'provider_pools.json';
+
     // 确保 providerPools 对象存在
     if (!config.providerPools) {
         config.providerPools = {};
@@ -72,7 +74,7 @@ async function autoLinkProviderConfigs(config) {
     
     // 如果有新的配置文件需要关联，保存更新后的 provider_pools.json
     if (totalNewProviders > 0) {
-        const filePath = config.PROVIDER_POOLS_FILE_PATH || 'provider_pools.json';
+        const filePath = poolsFilePath;
         try {
             await pfs.writeFile(filePath, JSON.stringify(config.providerPools, null, 2), 'utf8');
             console.log(`[Auto-Link] Added ${totalNewProviders} new config(s) to provider pools:`);

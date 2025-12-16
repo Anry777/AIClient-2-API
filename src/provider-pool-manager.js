@@ -69,6 +69,8 @@ export class ProviderPoolManager {
      * Initially, all providers are considered healthy and have zero usage.
      */
     initializeProviderStatus() {
+        this.providerStatus = {};
+        this.roundRobinIndex = {};
         for (const providerType in this.providerPools) {
             this.providerStatus[providerType] = [];
             this.roundRobinIndex[providerType] = 0; // Initialize round-robin index for each type

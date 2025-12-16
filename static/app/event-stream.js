@@ -158,6 +158,20 @@ function handleConfigUpdate(data) {
                 loadConfigList();
                 console.log('[ConfigUpdate] Config file list refreshed (file deleted)');
             }
+            
+            // If provider was deleted, also refresh provider list and modal
+            if (data.providerType) {
+                const modal = document.querySelector('.provider-modal');
+                if (modal && modal.getAttribute('data-provider-type') === data.providerType) {
+                    if (refreshProviderConfig) {
+                        refreshProviderConfig(data.providerType);
+                    }
+                }
+                
+                if (loadProviders) {
+                    loadProviders();
+                }
+            }
             break;
             
         case 'add':

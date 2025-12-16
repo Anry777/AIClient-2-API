@@ -12,6 +12,18 @@ services:
       ARGS: "--api-key 123456 --host 0.0.0.0"
     volumes:
       - type: bind
+        source: ./data/configs
+        target: /app/configs
+      - type: bind
+        source: ./data/provider_pools.json
+        target: /app/provider_pools.json
+      - type: bind
+        source: ./data/token-store.json
+        target: /app/token-store.json
+      - type: bind
+        source: ./data/logs
+        target: /app/logs
+      - type: bind
         source: ${USERPROFILE}/.aws/sso/cache
         target: /root/.aws/sso/cache
       - type: bind
