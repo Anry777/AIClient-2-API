@@ -132,7 +132,7 @@ function createConfigItemElement(config, index) {
         </div>
     `;
 
-    // 添加按钮事件监听器
+    // Add button event listeners
     const viewBtn = item.querySelector('.btn-view');
     const deleteBtn = item.querySelector('.btn-delete-small');
     
@@ -266,17 +266,17 @@ function updateStats() {
 }
 
 /**
- * 加载配置文件列表
+ * Load configuration file list
  */
 async function loadConfigList() {
-    // 防止重复加载
+    // Prevent duplicate loading
     if (isLoadingConfigs) {
-        console.log('正在加载配置列表，跳过重复调用');
+        console.log('Config list is already loading, skipping duplicate call');
         return;
     }
 
     isLoadingConfigs = true;
-    console.log('开始加载配置列表...');
+    console.log('Loading config list...');
     
     try {
         const result = await window.apiClient.get('/upload-configs');
@@ -284,26 +284,26 @@ async function loadConfigList() {
         filteredConfigs = [...allConfigs];
         renderConfigList();
         updateStats();
-        console.log('配置列表加载成功，共', allConfigs.length, '个项目');
-        // showToast('配置文件列表已刷新', 'success');
+        console.log('Config list loaded successfully. Total items:', allConfigs.length);
+        // showToast('Config list refreshed', 'success');
     } catch (error) {
-        console.error('加载配置列表失败:', error);
-        showToast('加载配置列表失败: ' + error.message, 'error');
+        console.error('Failed to load config list:', error);
+        showToast('Failed to load config list: ' + error.message, 'error');
         
-        // 使用模拟数据作为示例
+        // Use mock data as fallback
         allConfigs = generateMockConfigData();
         filteredConfigs = [...allConfigs];
         renderConfigList();
         updateStats();
     } finally {
         isLoadingConfigs = false;
-        console.log('配置列表加载完成');
+        console.log('Config list load complete');
     }
 }
 
 /**
- * 生成模拟配置数据（用于演示）
- * @returns {Array} 模拟配置数据
+ * Generate mock config data (for demonstration)
+ * @returns {Array} Mock config data
  */
 function generateMockConfigData() {
     return [
@@ -351,7 +351,7 @@ function generateMockConfigData() {
             size: 256,
             modified: '2025-11-08T15:20:00.000Z',
             isUsed: true,
-            content: '你是一个有用的AI助手...'
+            content: 'You are a helpful AI assistant...'
         },
         {
             name: 'invalid_config.json',
@@ -366,31 +366,31 @@ function generateMockConfigData() {
 }
 
 /**
- * 查看配置
- * @param {string} path - 文件路径
+ * View config
+ * @param {string} path - File path
  */
 async function viewConfig(path) {
     try {
         const fileData = await window.apiClient.get(`/upload-configs/view/${encodeURIComponent(path)}`);
         showConfigModal(fileData);
     } catch (error) {
-        console.error('查看配置失败:', error);
-        showToast('查看配置失败: ' + error.message, 'error');
+        console.error('Failed to view config:', error);
+        showToast('Failed to view config: ' + error.message, 'error');
     }
 }
 
 /**
- * 显示配置模态框
- * @param {Object} fileData - 文件数据
+ * Show config modal
+ * @param {Object} fileData - File data
  */
 function showConfigModal(fileData) {
-    // 创建模态框
+    // Create modal
     const modal = document.createElement('div');
     modal.className = 'config-view-modal';
     modal.innerHTML = `
         <div class="config-modal-content">
             <div class="config-modal-header">
-                <h3>配置文件: ${fileData.name}</h3>
+                <h3>Config file: ${fileData.name}</h3>
                 <button class="modal-close">
                     <i class="fas fa-times"></i>
                 </button>
@@ -398,36 +398,36 @@ function showConfigModal(fileData) {
             <div class="config-modal-body">
                 <div class="config-file-info">
                     <div class="file-info-item">
-                        <span class="info-label">文件路径:</span>
+                        <span class="info-label">File Path:</span>
                         <span class="info-value">${fileData.path}</span>
                     </div>
                     <div class="file-info-item">
-                        <span class="info-label">文件大小:</span>
+                        <span class="info-label">File Size:</span>
                         <span class="info-value">${formatFileSize(fileData.size)}</span>
                     </div>
                     <div class="file-info-item">
-                        <span class="info-label">最后修改:</span>
+                        <span class="info-label">Last Modified:</span>
                         <span class="info-value">${formatDate(fileData.modified)}</span>
                     </div>
                 </div>
                 <div class="config-content">
-                    <label>文件内容:</label>
+                    <label>File content:</label>
                     <pre class="config-content-display">${escapeHtml(fileData.content)}</pre>
                 </div>
             </div>
             <div class="config-modal-footer">
-                <button class="btn btn-secondary btn-close-modal">关闭</button>
+                <button class="btn btn-secondary btn-close-modal">Close</button>
                 <button class="btn btn-primary btn-copy-content" data-path="${fileData.path}">
-                    <i class="fas fa-copy"></i> 复制内容
+                    <i class="fas fa-copy"></i> Copy content
                 </button>
             </div>
         </div>
     `;
     
-    // 添加到页面
+    // Add to page
     document.body.appendChild(modal);
     
-    // 添加按钮事件监听器
+    // Add button event listeners
     const closeBtn = modal.querySelector('.btn-close-modal');
     const copyBtn = modal.querySelector('.btn-copy-content');
     const modalCloseBtn = modal.querySelector('.modal-close');
@@ -451,12 +451,12 @@ function showConfigModal(fileData) {
         });
     }
     
-    // 显示模态框
+    // Show modal
     setTimeout(() => modal.classList.add('show'), 10);
 }
 
 /**
- * 关闭配置模态框
+ * Close config modal
  */
 function closeConfigModal() {
     const modal = document.querySelector('.config-view-modal');
@@ -467,19 +467,19 @@ function closeConfigModal() {
 }
 
 /**
- * 复制配置内容
- * @param {string} path - 文件路径
+ * Copy config content
+ * @param {string} path - File path
  */
 async function copyConfigContent(path) {
     try {
         const fileData = await window.apiClient.get(`/upload-configs/view/${encodeURIComponent(path)}`);
         
-        // 尝试使用现代 Clipboard API
+        // Try to use modern Clipboard API
         if (navigator.clipboard && navigator.clipboard.writeText) {
             await navigator.clipboard.writeText(fileData.content);
-            showToast('内容已复制到剪贴板', 'success');
+            showToast('Content copied to clipboard', 'success');
         } else {
-            // 降级方案：使用传统的 document.execCommand
+            // Fallback: use traditional document.execCommand
             const textarea = document.createElement('textarea');
             textarea.value = fileData.content;
             textarea.style.position = 'fixed';
@@ -490,27 +490,27 @@ async function copyConfigContent(path) {
             try {
                 const successful = document.execCommand('copy');
                 if (successful) {
-                    showToast('内容已复制到剪贴板', 'success');
+                    showToast('Content copied to clipboard', 'success');
                 } else {
-                    showToast('复制失败，请手动复制', 'error');
+                    showToast('Copy failed, please copy manually', 'error');
                 }
             } catch (err) {
-                console.error('复制失败:', err);
-                showToast('复制失败，请手动复制', 'error');
+                console.error('Copy failed:', err);
+                showToast('Copy failed, please copy manually', 'error');
             } finally {
                 document.body.removeChild(textarea);
             }
         }
     } catch (error) {
-        console.error('复制失败:', error);
-        showToast('复制失败: ' + error.message, 'error');
+        console.error('Copy failed:', error);
+        showToast('Copy failed: ' + error.message, 'error');
     }
 }
 
 /**
- * HTML转义
- * @param {string} text - 要转义的文本
- * @returns {string} 转义后的文本
+ * HTML escape
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text
  */
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -519,13 +519,13 @@ function escapeHtml(text) {
 }
 
 /**
- * 显示删除确认模态框
- * @param {Object} config - 配置数据
+ * Show delete confirmation modal
+ * @param {Object} config - Config data
  */
 function showDeleteConfirmModal(config) {
     const isUsed = config.isUsed;
     const modalClass = isUsed ? 'delete-confirm-modal used' : 'delete-confirm-modal unused';
-    const title = isUsed ? '删除已关联配置' : '删除配置文件';
+    const title = isUsed ? 'Delete linked config' : 'Delete config file';
     const icon = isUsed ? 'fas fa-exclamation-triangle' : 'fas fa-trash';
     const buttonClass = isUsed ? 'btn btn-danger' : 'btn btn-warning';
     
@@ -547,29 +547,29 @@ function showDeleteConfirmModal(config) {
                     </div>
                     <div class="warning-content">
                         ${isUsed ?
-                            '<h4>⚠️ 此配置已被系统使用</h4><p>删除已关联的配置文件可能会影响系统正常运行。请确保您了解删除的后果。</p>' :
-                            '<h4>🗑️ 确认删除配置文件</h4><p>此操作将永久删除配置文件，且无法撤销。</p>'
+                            '<h4>⚠️ This config is currently in use</h4><p>Deleting a linked config file may affect system operation. Make sure you understand the consequences.</p>' :
+                            '<h4>🗑️ Confirm deletion</h4><p>This action will permanently delete the config file and cannot be undone.</p>'
                         }
                     </div>
                 </div>
                 
                 <div class="config-info">
                     <div class="config-info-item">
-                        <span class="info-label">文件名:</span>
+                        <span class="info-label">File name:</span>
                         <span class="info-value">${config.name}</span>
                     </div>
                     <div class="config-info-item">
-                        <span class="info-label">文件路径:</span>
+                        <span class="info-label">File path:</span>
                         <span class="info-value">${config.path}</span>
                     </div>
                     <div class="config-info-item">
-                        <span class="info-label">文件大小:</span>
+                        <span class="info-label">File size:</span>
                         <span class="info-value">${formatFileSize(config.size)}</span>
                     </div>
                     <div class="config-info-item">
-                        <span class="info-label">关联状态:</span>
+                        <span class="info-label">Link status:</span>
                         <span class="info-value status-${isUsed ? 'used' : 'unused'}">
-                            ${isUsed ? '已关联' : '未关联'}
+                            ${isUsed ? 'Linked' : 'Unlinked'}
                         </span>
                     </div>
                 </div>
@@ -580,32 +580,32 @@ function showDeleteConfirmModal(config) {
                             <i class="fas fa-info-circle"></i>
                         </div>
                         <div class="alert-content">
-                            <h5>关联详情</h5>
-                            <p>此配置文件正在被系统使用，删除后可能会导致:</p>
+                            <h5>Link details</h5>
+                            <p>This config file is currently in use. Deleting it may cause:</p>
                             <ul>
-                                <li>相关的AI服务无法正常工作</li>
-                                <li>配置管理中的设置失效</li>
-                                <li>提供商池配置丢失</li>
+                                <li>Related AI services may stop working</li>
+                                <li>Settings in Config Manager may break</li>
+                                <li>Provider pool configuration may be lost</li>
                             </ul>
-                            <p><strong>建议：</strong>请先在配置管理中解除文件引用后再删除。</p>
+                            <p><strong>Recommendation:</strong> unlink this file in Config Manager before deleting.</p>
                         </div>
                     </div>
                 ` : ''}
             </div>
             <div class="delete-modal-footer">
-                <button class="btn btn-secondary btn-cancel-delete">取消</button>
+                <button class="btn btn-secondary btn-cancel-delete">Cancel</button>
                 <button class="${buttonClass} btn-confirm-delete" data-path="${config.path}">
                     <i class="fas fa-${isUsed ? 'exclamation-triangle' : 'trash'}"></i>
-                    ${isUsed ? '强制删除' : '确认删除'}
+                    ${isUsed ? 'Force delete' : 'Confirm delete'}
                 </button>
             </div>
         </div>
     `;
     
-    // 添加到页面
+    // Add to page
     document.body.appendChild(modal);
     
-    // 添加事件监听器
+    // Add event listeners
     const closeBtn = modal.querySelector('.modal-close');
     const cancelBtn = modal.querySelector('.btn-cancel-delete');
     const confirmBtn = modal.querySelector('.btn-confirm-delete');
@@ -631,14 +631,14 @@ function showDeleteConfirmModal(config) {
         });
     }
     
-    // 点击外部关闭
+    // Close on outside click
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
             closeModal();
         }
     });
     
-    // ESC键关闭
+    // Close on ESC key
     const handleEsc = (e) => {
         if (e.key === 'Escape') {
             closeModal();
@@ -647,50 +647,50 @@ function showDeleteConfirmModal(config) {
     };
     document.addEventListener('keydown', handleEsc);
     
-    // 显示模态框
+    // Show modal
     setTimeout(() => modal.classList.add('show'), 10);
 }
 
 /**
- * 执行删除操作
- * @param {string} path - 文件路径
+ * Perform delete operation
+ * @param {string} path - File path
  */
 async function performDelete(path) {
     try {
         const result = await window.apiClient.delete(`/upload-configs/delete/${encodeURIComponent(path)}`);
         showToast(result.message, 'success');
         
-        // 从本地列表中移除
+        // Remove from local list
         allConfigs = allConfigs.filter(c => c.path !== path);
         filteredConfigs = filteredConfigs.filter(c => c.path !== path);
         renderConfigList();
         updateStats();
     } catch (error) {
-        console.error('删除配置失败:', error);
-        showToast('删除配置失败: ' + error.message, 'error');
+        console.error('Failed to delete config:', error);
+        showToast('Failed to delete config: ' + error.message, 'error');
     }
 }
 
 /**
- * 删除配置
- * @param {string} path - 文件路径
+ * Delete config
+ * @param {string} path - File path
  */
 async function deleteConfig(path) {
     const config = filteredConfigs.find(c => c.path === path) || allConfigs.find(c => c.path === path);
     if (!config) {
-        showToast('配置文件不存在', 'error');
+        showToast('Config file does not exist', 'error');
         return;
     }
     
-    // 显示删除确认模态框
+    // Show delete confirmation modal
     showDeleteConfirmModal(config);
 }
 
 /**
- * 初始化上传配置管理页面
+ * Initialize upload config manager
  */
 function initUploadConfigManager() {
-    // 绑定搜索事件
+    // Bind search events
     const searchInput = document.getElementById('configSearch');
     const searchBtn = document.getElementById('searchConfigBtn');
     const statusFilter = document.getElementById('configStatusFilter');
@@ -724,23 +724,23 @@ function initUploadConfigManager() {
         refreshBtn.addEventListener('click', loadConfigList);
     }
 
-    // 批量关联配置按钮
+    // Batch link config button
     const batchLinkBtn = document.getElementById('batchLinkKiroBtn') || document.getElementById('batchLinkProviderBtn');
     if (batchLinkBtn) {
         batchLinkBtn.addEventListener('click', batchLinkProviderConfigs);
     }
 
-    // 初始加载配置列表
+    // Initial load of config list
     loadConfigList();
 }
 
 /**
- * 重新加载配置文件
+ * Reload config
  */
 async function reloadConfig() {
-    // 防止重复重载
+    // Prevent duplicate reload
     if (isLoadingConfigs) {
-        console.log('正在重载配置，跳过重复调用');
+        console.log('Config reload is already in progress, skipping duplicate call');
         return;
     }
 
@@ -748,29 +748,29 @@ async function reloadConfig() {
         const result = await window.apiClient.post('/reload-config');
         showToast(result.message, 'success');
         
-        // 重新加载配置列表以反映最新的关联状态
+        // Reload config list to reflect latest link status
         await loadConfigList();
         
-        // 注意：不再发送 configReloaded 事件，避免重复调用
+        // Note: no longer dispatching configReloaded event to avoid duplicate calls
         // window.dispatchEvent(new CustomEvent('configReloaded', {
         //     detail: result.details
         // }));
         
     } catch (error) {
-        console.error('重载配置失败:', error);
-        showToast('重载配置失败: ' + error.message, 'error');
+        console.error('Failed to reload config:', error);
+        showToast('Failed to reload config: ' + error.message, 'error');
     }
 }
 
 /**
- * 根据文件路径检测对应的提供商类型
- * @param {string} filePath - 文件路径
- * @returns {Object|null} 提供商信息对象或null
+ * Detect provider from path
+ * @param {string} filePath - File path
+ * @returns {Object|null} Provider info object or null
  */
 function detectProviderFromPath(filePath) {
     const normalizedPath = filePath.replace(/\\/g, '/').toLowerCase();
     
-    // 定义目录到提供商的映射关系
+    // Define directory to provider mappings
     const providerMappings = [
         {
             patterns: ['configs/kiro/', '/kiro/'],
@@ -798,7 +798,7 @@ function detectProviderFromPath(filePath) {
         }
     ];
 
-    // 遍历映射关系，查找匹配的提供商
+    // Iterate through mappings to find matching provider
     for (const mapping of providerMappings) {
         for (const pattern of mapping.patterns) {
             if (normalizedPath.includes(pattern)) {
@@ -815,38 +815,38 @@ function detectProviderFromPath(filePath) {
 }
 
 /**
- * 一键关联配置到对应的提供商
- * @param {string} filePath - 配置文件路径
+ * Quick link provider config
+ * @param {string} filePath - Config file path
  */
 async function quickLinkProviderConfig(filePath) {
     try {
         const providerInfo = detectProviderFromPath(filePath);
         if (!providerInfo) {
-            showToast('无法识别配置文件对应的提供商类型', 'error');
+            showToast('Unable to detect provider type for this config file', 'error');
             return;
         }
         
-        showToast(`正在关联配置到 ${providerInfo.displayName}...`, 'info');
+        showToast(`Linking config to ${providerInfo.displayName}...`, 'info');
         
         const result = await window.apiClient.post('/quick-link-provider', {
             filePath: filePath
         });
         
-        showToast(result.message || '配置关联成功', 'success');
+        showToast(result.message || 'Config linked successfully', 'success');
         
-        // 刷新配置列表
+        // Refresh config list
         await loadConfigList();
     } catch (error) {
-        console.error('一键关联失败:', error);
-        showToast('关联失败: ' + error.message, 'error');
+        console.error('Quick link failed:', error);
+        showToast('Link failed: ' + error.message, 'error');
     }
 }
 
 /**
- * 批量关联所有支持的提供商目录下的未关联配置
+ * Batch link provider configs
  */
 async function batchLinkProviderConfigs() {
-    // 筛选出所有支持的提供商目录下的未关联配置
+    // Filter out unlinked configs in supported provider directories
     const unlinkedConfigs = allConfigs.filter(config => {
         if (config.isUsed) return false;
         const providerInfo = detectProviderFromPath(config.path);
@@ -854,11 +854,11 @@ async function batchLinkProviderConfigs() {
     });
     
     if (unlinkedConfigs.length === 0) {
-        showToast('没有需要关联的配置文件', 'info');
+        showToast('No config files to link', 'info');
         return;
     }
     
-    // 按提供商类型分组统计
+    // Group by provider type
     const groupedByProvider = {};
     unlinkedConfigs.forEach(config => {
         const providerInfo = detectProviderFromPath(config.path);
@@ -871,15 +871,15 @@ async function batchLinkProviderConfigs() {
     });
     
     const providerSummary = Object.entries(groupedByProvider)
-        .map(([name, count]) => `${name}: ${count}个`)
+        .map(([name, count]) => `${name}: ${count} file(s)`)
         .join(', ');
     
-    const confirmMsg = `确定要批量关联 ${unlinkedConfigs.length} 个配置吗？\n\n${providerSummary}`;
+    const confirmMsg = `Are you sure you want to link ${unlinkedConfigs.length} config file(s)?\n\n${providerSummary}`;
     if (!confirm(confirmMsg)) {
         return;
     }
     
-    showToast(`正在批量关联 ${unlinkedConfigs.length} 个配置...`, 'info');
+    showToast(`Linking ${unlinkedConfigs.length} config file(s)...`, 'info');
     
     let successCount = 0;
     let failCount = 0;
@@ -891,26 +891,26 @@ async function batchLinkProviderConfigs() {
             });
             successCount++;
         } catch (error) {
-            console.error(`关联失败: ${config.path}`, error);
+            console.error(`Link failed: ${config.path}`, error);
             failCount++;
         }
     }
     
-    // 刷新配置列表
+    // Refresh config list
     await loadConfigList();
     
     if (failCount === 0) {
-        showToast(`成功关联 ${successCount} 个配置`, 'success');
+        showToast(`Successfully linked ${successCount} config file(s)`, 'success');
     } else {
-        showToast(`关联完成: 成功 ${successCount} 个, 失败 ${failCount} 个`, 'warning');
+        showToast(`Linking completed: ${successCount} succeeded, ${failCount} failed`, 'warning');
     }
 }
 
 /**
- * 防抖函数
- * @param {Function} func - 要防抖的函数
- * @param {number} wait - 等待时间（毫秒）
- * @returns {Function} 防抖后的函数
+ * Debounce function
+ * @param {Function} func - Function to debounce
+ * @param {number} wait - Wait time (ms)
+ * @returns {Function} Debounced function
  */
 function debounce(func, wait) {
     let timeout;
@@ -924,7 +924,7 @@ function debounce(func, wait) {
     };
 }
 
-// 导出函数
+// Export functions
 export {
     initUploadConfigManager,
     searchConfigs,

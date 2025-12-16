@@ -1184,7 +1184,7 @@ async function addProvider(providerType) {
             providerConfig
         });
         await window.apiClient.post('/reload-config');
-        showToast('提供商配置添加成功', 'success');
+        showToast('Provider configuration added successfully', 'success');
         // 移除添加表单
         const form = document.querySelector('.add-provider-form');
         if (form) {
@@ -1194,7 +1194,7 @@ async function addProvider(providerType) {
         await refreshProviderConfig(providerType);
     } catch (error) {
         console.error('Failed to add provider:', error);
-        showToast('添加失败: ' + error.message, 'error');
+        showToast('Add failed: ' + error.message, 'error');
     }
 }
 
@@ -1214,8 +1214,8 @@ async function toggleProviderStatus(uuid, event) {
     const isCurrentlyDisabled = currentProvider.classList.contains('disabled');
     const action = isCurrentlyDisabled ? 'enable' : 'disable';
     const confirmMessage = isCurrentlyDisabled ?
-        `确定要启用这个提供商配置吗？` :
-        `确定要禁用这个提供商配置吗？禁用后该提供商将不会被选中使用。`;
+        `Are you sure you want to enable this provider configuration?` :
+        `Are you sure you want to disable this provider configuration? After disabling, it will not be selected for use.`;
     
     if (!confirm(confirmMessage)) {
         return;
@@ -1224,12 +1224,12 @@ async function toggleProviderStatus(uuid, event) {
     try {
         await window.apiClient.post(`/providers/${encodeURIComponent(providerType)}/${uuid}/${action}`, { action });
         await window.apiClient.post('/reload-config');
-        showToast(`提供商${isCurrentlyDisabled ? '启用' : '禁用'}成功`, 'success');
+        showToast(`Provider ${isCurrentlyDisabled ? 'enabled' : 'disabled'} successfully`, 'success');
         // 重新获取该提供商类型的最新配置
         await refreshProviderConfig(providerType);
     } catch (error) {
         console.error('Failed to toggle provider status:', error);
-        showToast(`操作失败: ${error.message}`, 'error');
+        showToast(`Operation failed: ${error.message}`, 'error');
     }
 }
 
@@ -1238,12 +1238,12 @@ async function toggleProviderStatus(uuid, event) {
  * @param {string} providerType - 提供商类型
  */
 async function resetAllProvidersHealth(providerType) {
-    if (!confirm(`确定要将 ${providerType} 的所有节点重置为健康状态吗？\n\n这将清除所有节点的错误计数和错误时间。`)) {
+    if (!confirm(`Are you sure you want to reset all ${providerType} nodes to healthy status?\n\nThis will clear error counts and error timestamps for all nodes.`)) {
         return;
     }
     
     try {
-        showToast('正在重置健康状态...', 'info');
+        showToast('Resetting health status...', 'info');
         
         const response = await window.apiClient.post(
             `/providers/${encodeURIComponent(providerType)}/reset-health`,
@@ -1251,7 +1251,7 @@ async function resetAllProvidersHealth(providerType) {
         );
         
         if (response.success) {
-            showToast(`成功重置 ${response.resetCount} 个节点的健康状态`, 'success');
+            showToast(`Successfully reset health status for ${response.resetCount} node(s)`, 'success');
             
             // 重新加载配置
             await window.apiClient.post('/reload-config');
@@ -1259,11 +1259,11 @@ async function resetAllProvidersHealth(providerType) {
             // 刷新提供商配置显示
             await refreshProviderConfig(providerType);
         } else {
-            showToast('重置健康状态失败', 'error');
+            showToast('Failed to reset health status', 'error');
         }
     } catch (error) {
-        console.error('重置健康状态失败:', error);
-        showToast(`重置健康状态失败: ${error.message}`, 'error');
+        console.error('Failed to reset health status:', error);
+        showToast(`Failed to reset health status: ${error.message}`, 'error');
     }
 }
 
@@ -1321,7 +1321,7 @@ function renderNotSupportedModelsSelector(uuid, models, notSupportedModels = [])
     if (!container) return;
     
     if (models.length === 0) {
-        container.innerHTML = '<div class="no-models">该提供商类型暂无可用模型列表</div>';
+        container.innerHTML = '<div class="no-models">No models available for this provider type</div>';
         return;
     }
     

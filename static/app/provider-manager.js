@@ -97,7 +97,7 @@ function renderProviders(providers) {
     container.innerHTML = '';
 
     // Check if there is provider pool data
-    const hasProviders = Object.keys(providers).length > 0;
+    const hasProviders = Object.values(providers).some(accounts => Array.isArray(accounts) && accounts.length > 0);
     const statsGrid = document.querySelector('#providers .stats-grid');
     
     // Always show statistics cards
@@ -228,7 +228,9 @@ function renderProviders(providers) {
     });
     
     // Update statistics cards
-    const activeProviders = hasProviders ? Object.keys(providers).length : 0;
+    const activeProviders = hasProviders
+        ? Object.entries(providers).filter(([, accounts]) => Array.isArray(accounts) && accounts.length > 0).length
+        : 0;
     updateProviderStatsDisplay(activeProviders, totalHealthy, totalAccounts);
 }
 
