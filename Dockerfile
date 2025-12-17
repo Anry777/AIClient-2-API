@@ -23,7 +23,7 @@ USER root
 
 # Prepare persistent data directories/files and keep legacy paths working via symlinks
 RUN mkdir -p /app/data/configs /app/data/logs /home/app \
-    && touch /app/data/provider_pools.json /app/data/token-store.json /app/data/config.json /app/data/input_system_prompt.txt /app/data/fetch_system_prompt.txt /app/data/pwd \
+    && touch /app/data/provider_pools.json /app/data/token-store.json \
     && rm -rf /app/logs /app/configs /app/provider_pools.json /app/token-store.json /app/config.json /app/input_system_prompt.txt /app/fetch_system_prompt.txt /app/pwd \
     && ln -s /app/data/logs /app/logs \
     && ln -s /app/data/configs /app/configs \
@@ -44,6 +44,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 # Startup command
 # Starts the server with default config; supports additional args via environment variable.
 # Example: docker run -e ARGS="--api-key mykey --port 8080" ...
-CMD ["sh", "-c", "mkdir -p /app/data/configs /app/data/logs && touch /app/data/provider_pools.json /app/data/token-store.json /app/data/config.json /app/data/input_system_prompt.txt /app/data/fetch_system_prompt.txt /app/data/pwd && node src/api-server.js $ARGS"]
-
- 
+CMD ["sh", "-c", "mkdir -p /app/data/configs /app/data/logs && touch /app/data/provider_pools.json /app/data/token-store.json && node src/api-server.js $ARGS"]

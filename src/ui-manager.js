@@ -26,6 +26,8 @@ import {
 // Store tokens in local file
 const TOKEN_STORE_FILE = 'token-store.json';
 
+const DEFAULT_ADMIN_PASSWORD = process.env.UI_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || '123456';
+
 /**
  * Read token storage file
  */
@@ -137,10 +139,13 @@ async function cleanupExpiredTokens() {
 async function readPasswordFile() {
     try {
         const password = await fs.readFile('./pwd', 'utf8');
-        return password.trim();
+        const trimmed = password.trim();
+        return trimmed || DEFAULT_ADMIN_PASSWORD;
     } catch (error) {
-        console.error('Failed to read password file:', error);
-        return null;
+        if (error?.code !== 'ENOENT') {
+            console.error('Failed to read password file:', error);
+        }
+        return DEFAULT_ADMIN_PASSWORD;
     }
 }
 
