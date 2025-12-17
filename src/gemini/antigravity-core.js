@@ -322,12 +322,12 @@ export class AntigravityApiService {
                 scope: ['https://www.googleapis.com/auth/cloud-platform']
             });
 
-            console.log('\n[Antigravity Auth] 正在自动打开浏览器进行授权...');
-            console.log('[Antigravity Auth] 授权链接:', authUrl, '\n');
+            console.log('\n[Antigravity Auth] Открываю браузер для авторизации...');
+            console.log('[Antigravity Auth] Ссылка для авторизации:', authUrl, '\n');
 
             // 自动打开浏览器
             const showFallbackMessage = () => {
-                console.log('[Antigravity Auth] 无法自动打开浏览器，请手动复制上面的链接到浏览器中打开');
+                console.log('[Antigravity Auth] Не удалось автоматически открыть браузер. Откройте ссылку выше вручную.');
             };
 
             if (this.config) {

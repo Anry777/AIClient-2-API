@@ -282,11 +282,11 @@ export class GeminiApiService {
         this.authClient.redirectUri = redirectUri;
         return new Promise(async (resolve, reject) => {
             const authUrl = this.authClient.generateAuthUrl({ access_type: 'offline', scope: ['https://www.googleapis.com/auth/cloud-platform'] });
-            console.log('\n[Gemini Auth] 正在自动打开浏览器进行授权...');
+            console.log('\n[Gemini Auth] Открываю браузер для авторизации...');
             
             // 自动打开浏览器
             const showFallbackMessage = () => {
-                console.log('[Gemini Auth] 无法自动打开浏览器，请手动复制上面的链接到浏览器中打开');
+                console.log('[Gemini Auth] Не удалось автоматически открыть браузер. Откройте ссылку выше вручную.');
             };
             
             if (this.config) {
@@ -301,7 +301,7 @@ export class GeminiApiService {
             } else {
                 showFallbackMessage();
             }
-            console.log('[Gemini Auth] 授权链接:', authUrl, '\n');
+            console.log('[Gemini Auth] Ссылка для авторизации:', authUrl, '\n');
             const server = http.createServer(async (req, res) => {
                 try {
                     const url = new URL(req.url, redirectUri);
