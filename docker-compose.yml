@@ -4,7 +4,6 @@ services:
       context: .
     image: aiclient2api
     container_name: aiclient2api
-    user: "${AICLIENT_USER:-1001:1001}"
     restart: always
     privileged: true
     ports:
