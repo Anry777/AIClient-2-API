@@ -8,16 +8,17 @@ services:
     privileged: true
     ports:
       - "3001:3000"
+      - "8085:8085"
+      - "8086:8086"
     environment:
-      ARGS: "--api-key 123456 --host 0.0.0.0"
-      HOME: /home/app
+      - ARGS=--api-key 123456 --host 0.0.0.0
+      - HOME=/home/app
     volumes:
-      - type: bind
-        source: ./data
-        target: /app/data
-      - type: bind
-        source: ${HOME}/.aws/sso/cache
-        target: /home/app/.aws/sso/cache
-      - type: bind
-        source: ${HOME}/.gemini/oauth_creds.json
-        target: /home/app/.gemini/oauth_creds.json
+      - ./data:/app/data
+      - ./data/config.json:/app/config.json
+      - ./data/input_system_prompt.txt:/app/input_system_prompt.txt
+      - ./data/.gemini:/home/app/.gemini
+      - ./data/.antigravity:/home/app/.antigravity
+      - ./data/.qwen:/home/app/.qwen
+      - ./data/.aws:/home/app/.aws
+      - ./pwd:/app/data/pwd

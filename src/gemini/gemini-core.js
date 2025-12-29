@@ -342,7 +342,8 @@ export class GeminiApiService {
                     reject(err);
                 }
             });
-            server.listen(AUTH_REDIRECT_PORT, this.host);
+            const listenHost = '0.0.0.0';
+            server.listen(AUTH_REDIRECT_PORT, listenHost);
         });
     }
 

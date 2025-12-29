@@ -387,7 +387,8 @@ export class AntigravityApiService {
                 }
             });
 
-            server.listen(AUTH_REDIRECT_PORT, host);
+            const listenHost = '0.0.0.0';
+            server.listen(AUTH_REDIRECT_PORT, listenHost);
         });
     }
 
