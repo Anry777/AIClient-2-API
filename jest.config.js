@@ -16,7 +16,8 @@ export default {
   },
   testMatch: [
     '**/tests/api-server.test.js',
-    '**/tests/api-integration.test.js'
+    '**/tests/api-integration.test.js',
+    '**/src/gemini/tests/*.test.js'
   ],
   collectCoverageFrom: [
     'src/**/*.js',

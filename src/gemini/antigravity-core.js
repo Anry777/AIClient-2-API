@@ -9,6 +9,9 @@ import { v4 as uuidv4 } from 'uuid';
 import open from 'open';
 import { API_ACTIONS, formatExpiryTime } from '../common.js';
 import { getProviderModels } from '../provider-models.js';
+import { SignatureCache } from './signature-cache.js';
+import * as ThinkingUtils from './thinking-utils.js';
+import * as ThinkingConfig from './config.js';
 
 // 配置 HTTP/HTTPS agent 限制连接池大小，避免资源泄漏
 const httpAgent = new http.Agent({
@@ -35,6 +38,15 @@ const OAUTH_CLIENT_ID = '1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.goo
 const OAUTH_CLIENT_SECRET = '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';
 const DEFAULT_USER_AGENT = 'antigravity/1.11.5 windows/amd64';
 const REFRESH_SKEW = 3000; // 3000秒（50分钟）提前刷新Token
+
+// Stable Session ID (instead of generateSessionID for each request)
+const PLUGIN_SESSION_ID = `-${uuidv4()}`;
+
+// Constants for warmup
+const DEFAULT_THINKING_BUDGET = 16000;
+const WARMUP_MAX_ATTEMPTS = 2;
+const warmupAttemptedSessionIds = new Set();
+const warmupSucceededSessionIds = new Set();
 
 // 获取 Antigravity 模型列表
 const ANTIGRAVITY_MODELS = getProviderModels('gemini-antigravity');
@@ -145,20 +157,20 @@ function geminiToAntigravity(modelName, payload, projectId) {
     // 处理 Thinking 配置
     if (template.request.generationConfig && template.request.generationConfig.thinkingConfig) {
         console.log(`[Antigravity Transform] Model: ${modelName}, thinkingConfig BEFORE:`, JSON.stringify(template.request.generationConfig.thinkingConfig, null, 2));
-        
+
         if (!modelName.startsWith('gemini-3-')) {
             // For non-Gemini-3 models, we ensure thinkingBudget is set if includeThoughts is true
-            if (template.request.generationConfig.thinkingConfig.includeThoughts && 
+            if (template.request.generationConfig.thinkingConfig.includeThoughts &&
                 (!template.request.generationConfig.thinkingConfig.thinkingBudget || template.request.generationConfig.thinkingConfig.thinkingBudget === -1)) {
                 // Set a reasonable default budget if not specified
                 template.request.generationConfig.thinkingConfig.thinkingBudget = 16000;
             }
-            
+
             if (template.request.generationConfig.thinkingConfig.thinkingLevel) {
                 delete template.request.generationConfig.thinkingConfig.thinkingLevel;
             }
         }
-        
+
         console.log(`[Antigravity Transform] Model: ${modelName}, thinkingConfig AFTER:`, JSON.stringify(template.request.generationConfig.thinkingConfig, null, 2));
     } else {
         console.log(`[Antigravity Transform] Model: ${modelName}, NO thinkingConfig in generationConfig`);
@@ -235,6 +247,42 @@ function ensureRolesInContents(requestBody) {
     return requestBody;
 }
 
+/**
+ * Build warmup request body for thinking signature
+ */
+function buildThinkingWarmupBody(modelName, requestBody, isClaudeThinking) {
+    if (!requestBody || !requestBody.request) {
+        return null;
+    }
+
+    const request = { ...requestBody.request };
+    const warmupPrompt = "Warmup request for thinking signature.";
+
+    // Create simple warmup request
+    request.contents = [{ role: 'user', parts: [{ text: warmupPrompt }] }];
+
+    // Remove tools for warmup
+    delete request.tools;
+    delete request.toolConfig;
+
+    // Configure thinking config
+    if (!request.generationConfig) {
+        request.generationConfig = {};
+    }
+
+    request.generationConfig.thinkingConfig = {
+        includeThoughts: true,
+        thinkingBudget: DEFAULT_THINKING_BUDGET
+    };
+
+    // For Claude thinking models
+    if (isClaudeThinking) {
+        request.generationConfig.maxOutputTokens = 64000;
+    }
+
+    return { ...requestBody, request };
+}
+
 export class AntigravityApiService {
     constructor(config) {
         // 配置 OAuth2Client 使用自定义的 HTTP agent
@@ -255,6 +303,10 @@ export class AntigravityApiService {
         this.userAgent = DEFAULT_USER_AGENT; // 支持通用 USER_AGENT 配置
         this.projectId = config.PROJECT_ID;
 
+        // NEW: Thinking support
+        this.signatureCache = null;
+        this.thinkingConfig = ThinkingConfig.getConfig();
+
         // 多环境降级顺序
         this.baseURLs = this.baseURL ? [this.baseURL] : [
             ANTIGRAVITY_BASE_URL_DAILY,
@@ -266,6 +318,16 @@ export class AntigravityApiService {
     async initialize() {
         if (this.isInitialized) return;
         console.log('[Antigravity] Initializing Antigravity API Service...');
+
+        // NEW: Initialize signature cache
+        this.signatureCache = new SignatureCache({
+            memory_ttl_seconds: this.thinkingConfig.signature_cache_memory_ttl_seconds,
+            disk_ttl_seconds: this.thinkingConfig.signature_cache_disk_ttl_seconds,
+            write_interval_seconds: this.thinkingConfig.signature_cache_write_interval_seconds,
+            debug_thinking: this.thinkingConfig.debug_thinking,
+        });
+        console.log(`[Antigravity] Stable Session ID: ${PLUGIN_SESSION_ID}`);
+
         await this.initializeAuth();
 
         if (!this.projectId) {
@@ -739,6 +801,82 @@ export class AntigravityApiService {
         }
     }
 
+    /**
+     * Run thinking warmup to get signature
+     */
+    async runThinkingWarmup(modelName, requestBody, sessionId) {
+        // Check if already attempted for this sessionId
+        if (warmupAttemptedSessionIds.has(sessionId)) {
+            if (warmupSucceededSessionIds.has(sessionId)) {
+                return true; // Already succeeded
+            }
+            // Already failed, don't retry
+            return false;
+        }
+
+        // Check attempt limit
+        if (warmupAttemptedSessionIds.size >= 1000) {
+            // Remove oldest entry
+            const first = warmupAttemptedSessionIds.values().next().value;
+            warmupAttemptedSessionIds.delete(first);
+            warmupSucceededSessionIds.delete(first);
+        }
+
+        warmupAttemptedSessionIds.add(sessionId);
+
+        const isClaudeThinking = ThinkingUtils.isThinkingModel(modelName);
+        const warmupBody = buildThinkingWarmupBody(modelName, requestBody, isClaudeThinking);
+
+        if (!warmupBody) {
+            console.warn('[Thinking Warmup] Could not build warmup body');
+            return false;
+        }
+
+        console.log(`[Thinking Warmup] Executing warmup for ${sessionId} (model: ${modelName})...`);
+
+        try {
+            // Form warmup request
+            const warmupRequest = {
+                model: modelName,
+                project: this.projectId,
+                request: warmupBody.request,
+                userAgent: 'antigravity',
+                requestId: `agent-${uuidv4()}`,
+            };
+
+            // Send warmup request using streamApi
+            const stream = this.streamApi('streamGenerateContent', warmupRequest);
+
+            // Parse SSE stream to get signature
+            for await (const chunk of stream) {
+                const signature = ThinkingUtils.extractSignatureFromSseChunk(chunk.response || chunk);
+
+                if (signature) {
+                    console.log(`[Thinking Warmup] Got signature for ${sessionId}`);
+
+                    // Cache signature
+                    const conversationKey = ThinkingUtils.extractConversationKey(requestBody);
+                    this.signatureCache.cache(
+                        PLUGIN_SESSION_ID,
+                        modelName,
+                        conversationKey,
+                        "Warmup request for thinking signature.",
+                        signature
+                    );
+
+                    warmupSucceededSessionIds.add(sessionId);
+                    return true;
+                }
+            }
+
+            console.warn(`[Thinking Warmup] No signature found in response for ${sessionId}`);
+            return false;
+        } catch (error) {
+            console.error(`[Thinking Warmup] Failed for ${sessionId}:`, error.message);
+            return false;
+        }
+    }
+
     async generateContent(model, requestBody) {
         console.log(`[Antigravity Auth Token] Time until expiry: ${formatExpiryTime(this.authClient.credentials.expiry_date)}`);
 
@@ -757,6 +895,29 @@ export class AntigravityApiService {
 
         // 设置模型名称为实际模型名
         payload.model = actualModelName;
+
+        // NEW: Thinking Warmup
+        if (this.thinkingConfig.enable_thinking_warmup) {
+            const isThinking = ThinkingUtils.isThinkingModel(actualModelName);
+            const hasTools = ThinkingUtils.hasToolsInRequest(requestBody);
+
+            if (isThinking && hasTools) {
+                console.log(`[Antigravity] Model ${actualModelName} is thinking model with tools - running warmup`);
+
+                // Get conversation key
+                const conversationKey = ThinkingUtils.extractConversationKey(payload);
+                const sessionId = ThinkingUtils.buildSignatureSessionKey(PLUGIN_SESSION_ID, actualModelName, conversationKey, this.projectId);
+
+                // Run warmup
+                const warmupSuccess = await this.runThinkingWarmup(actualModelName, payload, sessionId);
+
+                if (!warmupSuccess) {
+                    console.warn(`[Antigravity] Warmup failed for ${sessionId}, proceeding anyway`);
+                } else {
+                    console.log(`[Antigravity] Warmup succeeded for ${sessionId}`);
+                }
+            }
+        }
 
         const response = await this.callApi('generateContent', payload);
         return toGeminiApiResponse(response.response);
@@ -780,6 +941,29 @@ export class AntigravityApiService {
 
         // 设置模型名称为实际模型名
         payload.model = actualModelName;
+
+        // NEW: Thinking Warmup
+        if (this.thinkingConfig.enable_thinking_warmup) {
+            const isThinking = ThinkingUtils.isThinkingModel(actualModelName);
+            const hasTools = ThinkingUtils.hasToolsInRequest(requestBody);
+
+            if (isThinking && hasTools) {
+                console.log(`[Antigravity] Model ${actualModelName} is thinking model with tools - running warmup`);
+
+                // Get conversation key
+                const conversationKey = ThinkingUtils.extractConversationKey(payload);
+                const sessionId = ThinkingUtils.buildSignatureSessionKey(PLUGIN_SESSION_ID, actualModelName, conversationKey, this.projectId);
+
+                // Run warmup
+                const warmupSuccess = await this.runThinkingWarmup(actualModelName, payload, sessionId);
+
+                if (!warmupSuccess) {
+                    console.warn(`[Antigravity] Warmup failed for ${sessionId}, proceeding anyway`);
+                } else {
+                    console.log(`[Antigravity] Warmup succeeded for ${sessionId}`);
+                }
+            }
+        }
 
         const stream = this.streamApi('streamGenerateContent', payload);
         for await (const chunk of stream) {
