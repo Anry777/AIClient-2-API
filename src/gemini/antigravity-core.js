@@ -144,6 +144,8 @@ function geminiToAntigravity(modelName, payload, projectId) {
 
     // 处理 Thinking 配置
     if (template.request.generationConfig && template.request.generationConfig.thinkingConfig) {
+        console.log(`[Antigravity Transform] Model: ${modelName}, thinkingConfig BEFORE:`, JSON.stringify(template.request.generationConfig.thinkingConfig, null, 2));
+        
         if (!modelName.startsWith('gemini-3-')) {
             // For non-Gemini-3 models, we ensure thinkingBudget is set if includeThoughts is true
             if (template.request.generationConfig.thinkingConfig.includeThoughts && 
@@ -156,6 +158,10 @@ function geminiToAntigravity(modelName, payload, projectId) {
                 delete template.request.generationConfig.thinkingConfig.thinkingLevel;
             }
         }
+        
+        console.log(`[Antigravity Transform] Model: ${modelName}, thinkingConfig AFTER:`, JSON.stringify(template.request.generationConfig.thinkingConfig, null, 2));
+    } else {
+        console.log(`[Antigravity Transform] Model: ${modelName}, NO thinkingConfig in generationConfig`);
     }
 
     // 处理 Claude Sonnet 模型的工具声明
@@ -569,6 +575,14 @@ export class AntigravityApiService {
         const baseURL = this.baseURLs[baseURLIndex];
 
         try {
+            // Debug logging for request body
+            if (body.generationConfig?.thinkingConfig) {
+                console.log('[Antigravity] Request with thinkingConfig:', JSON.stringify({
+                    model: body.model,
+                    thinkingConfig: body.generationConfig.thinkingConfig
+                }, null, 2));
+            }
+
             const requestOptions = {
                 url: `${baseURL}/${ANTIGRAVITY_API_VERSION}:${method}`,
                 method: 'POST',
