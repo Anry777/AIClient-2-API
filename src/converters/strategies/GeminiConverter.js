@@ -361,6 +361,10 @@ export class GeminiConverter extends BaseConverter {
                     if (part.text) {
                         contents.push(part.text);
                     }
+                    // 处理 Gemini 2.0+ 的 thought/thinking 字段
+                    if (part.thought) {
+                        contents.push(`<thinking>\n${part.thought}\n</thinking>`);
+                    }
                 });
             }
         });

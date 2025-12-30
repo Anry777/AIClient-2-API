@@ -105,9 +105,14 @@ export async function logConversation(type, content, logMode, logFilename) {
     const timestamp = new Date().toLocaleString();
     const logEntry = `${timestamp} [${type.toUpperCase()}]:\n${content}\n--------------------------------------\n`;
 
-    if (logMode === 'console') {
+    const isConsole = logMode === 'console' || logMode === 'all';
+    const isFile = logMode === 'file' || logMode === 'all';
+
+    if (isConsole) {
         console.log(logEntry);
-    } else if (logMode === 'file') {
+    }
+    
+    if (isFile && logFilename) {
         try {
             // Append to the file
             await fs.appendFile(logFilename, logEntry);
@@ -274,6 +279,11 @@ export async function handleUnaryRequest(res, service, model, requestBody, fromP
         requestBody.model = model;
         // fs.writeFile('oldRequest'+Date.now()+'.json', JSON.stringify(requestBody));
         const nativeResponse = await service.generateContent(model, requestBody);
+        
+        if (PROMPT_LOG_MODE === 'all') {
+            console.log('[DEBUG] Native Response:', JSON.stringify(nativeResponse, null, 2));
+        }
+
         const responseText = extractResponseText(nativeResponse, toProvider);
 
         // Convert the response back to the client's format (fromProvider), if necessary.

@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { promises as pfs } from 'fs';
+import path from 'path';
 import { INPUT_SYSTEM_PROMPT_FILE, MODEL_PROVIDER } from './common.js';
 
 export let CONFIG = {}; // Make CONFIG exportable
@@ -287,11 +288,11 @@ export async function initializeConfig(args = process.argv.slice(2), configFileP
     }
 
     // Set PROMPT_LOG_FILENAME based on the determined config
-    if (currentConfig.PROMPT_LOG_MODE === 'file') {
+    if (currentConfig.PROMPT_LOG_MODE === 'file' || currentConfig.PROMPT_LOG_MODE === 'all') {
         const now = new Date();
         const pad = (num) => String(num).padStart(2, '0');
         const timestamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-        PROMPT_LOG_FILENAME = `${currentConfig.PROMPT_LOG_BASE_NAME}-${timestamp}.log`;
+        PROMPT_LOG_FILENAME = path.join(process.cwd(), 'data', 'logs', `${currentConfig.PROMPT_LOG_BASE_NAME}-${timestamp}.log`);
     } else {
         PROMPT_LOG_FILENAME = ''; // Clear if not logging to file
     }

@@ -711,20 +711,34 @@ export class OpenAIConverter extends BaseConverter {
             return { functionCallingConfig: { mode: toolChoice.toUpperCase() } };
         }
         if (typeof toolChoice === 'object' && toolChoice.function) {
-            return { functionCallingConfig: { mode: 'ANY', allowedFunctionNames: [toolChoice.function.name] } };
+            return { functionCallingConfig: { mode: 'ANY' } };
         }
-        return null;
+        return undefined;
     }
 
     /**
      * 构建Gemini生成配置
      */
-    buildGeminiGenerationConfig({ temperature, max_tokens, top_p, stop, tools, response_format }, model) {
+    buildGeminiGenerationConfig(openaiRequest, model) {
+        const { temperature, max_tokens, top_p, stop, tools, response_format, reasoning_effort } = openaiRequest;
         const config = {};
         config.temperature = checkAndAssignOrDefault(temperature, GEMINI_DEFAULT_TEMPERATURE);
         config.maxOutputTokens = checkAndAssignOrDefault(max_tokens, GEMINI_DEFAULT_MAX_TOKENS);
         config.topP = checkAndAssignOrDefault(top_p, GEMINI_DEFAULT_TOP_P);
         if (stop !== undefined) config.stopSequences = Array.isArray(stop) ? stop : [stop];
+
+        // Handle Thinking Config for Gemini 2.0+
+        if (model && (model.includes('thinking') || reasoning_effort)) {
+            config.thinkingConfig = {
+                includeThoughts: true
+            };
+            // Only set thinkingBudget for Claude models via Antigravity
+            if (model.includes('opus') || model.includes('sonnet')) {
+                // Claude models need smaller thinking budget to leave room for output
+                config.thinkingConfig.thinkingBudget = 4000;
+            }
+            // For native Gemini thinking models, don't set budget - use API default
+        }
 
         // Handle response_format
         if (response_format) {
@@ -739,17 +753,15 @@ export class OpenAIConverter extends BaseConverter {
         }
 
         // Gemini 2.5 and thinking models require responseModalities: ["TEXT"]
-        // But this parameter cannot be added when using tools (causes 400 error)
         const hasTools = tools && Array.isArray(tools) && tools.length > 0;
         if (!hasTools && model && (model.includes('2.5') || model.includes('thinking') || model.includes('2.0-flash-thinking'))) {
             console.log(`[OpenAI->Gemini] Adding responseModalities: ["TEXT"] for model: ${model}`);
             config.responseModalities = ["TEXT"];
-        } else if (hasTools && model && (model.includes('2.5') || model.includes('thinking') || model.includes('2.0-flash-thinking'))) {
-            console.log(`[OpenAI->Gemini] Skipping responseModalities for model ${model} because tools are present`);
         }
 
         return config;
     }
+
     /**
      * 将OpenAI响应转换为Gemini响应格式
      */

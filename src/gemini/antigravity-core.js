@@ -143,12 +143,18 @@ function geminiToAntigravity(modelName, payload, projectId) {
     }
 
     // 处理 Thinking 配置
-    if (!modelName.startsWith('gemini-3-')) {
-        if (template.request.generationConfig &&
-            template.request.generationConfig.thinkingConfig &&
-            template.request.generationConfig.thinkingConfig.thinkingLevel) {
-            delete template.request.generationConfig.thinkingConfig.thinkingLevel;
-            template.request.generationConfig.thinkingConfig.thinkingBudget = -1;
+    if (template.request.generationConfig && template.request.generationConfig.thinkingConfig) {
+        if (!modelName.startsWith('gemini-3-')) {
+            // For non-Gemini-3 models, we ensure thinkingBudget is set if includeThoughts is true
+            if (template.request.generationConfig.thinkingConfig.includeThoughts && 
+                (!template.request.generationConfig.thinkingConfig.thinkingBudget || template.request.generationConfig.thinkingConfig.thinkingBudget === -1)) {
+                // Set a reasonable default budget if not specified
+                template.request.generationConfig.thinkingConfig.thinkingBudget = 16000;
+            }
+            
+            if (template.request.generationConfig.thinkingConfig.thinkingLevel) {
+                delete template.request.generationConfig.thinkingConfig.thinkingLevel;
+            }
         }
     }
 
