@@ -13,7 +13,7 @@ import { SignatureCache } from './signature-cache.js';
 import * as ThinkingUtils from './thinking-utils.js';
 import * as ThinkingConfig from './config.js';
 
-// 配置 HTTP/HTTPS agent 限制连接池大小，避免资源泄漏
+// Configure HTTP/HTTPS agent to limit connection pool size and avoid resource leaks
 const httpAgent = new http.Agent({
     keepAlive: true,
     maxSockets: 100,
@@ -37,7 +37,7 @@ const ANTIGRAVITY_API_VERSION = 'v1internal';
 const OAUTH_CLIENT_ID = '1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com';
 const OAUTH_CLIENT_SECRET = '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';
 const DEFAULT_USER_AGENT = 'antigravity/1.11.5 windows/amd64';
-const REFRESH_SKEW = 3000; // 3000秒（50分钟）提前刷新Token
+const REFRESH_SKEW = 3000; // 3000 seconds (50 minutes) refresh token ahead of time
 
 // Stable Session ID (instead of generateSessionID for each request)
 const PLUGIN_SESSION_ID = `-${uuidv4()}`;
@@ -48,10 +48,10 @@ const WARMUP_MAX_ATTEMPTS = 2;
 const warmupAttemptedSessionIds = new Set();
 const warmupSucceededSessionIds = new Set();
 
-// 获取 Antigravity 模型列表
+// Get Antigravity Model List
 const ANTIGRAVITY_MODELS = getProviderModels('gemini-antigravity');
 
-// 模型别名映射
+// Model Alias Mapping
 const MODEL_ALIAS_MAP = {
     'gemini-2.5-computer-use-preview-10-2025': 'rev19-uic3-1p',
     'gemini-3-pro-image-preview': 'gemini-3-pro-image',
@@ -68,18 +68,18 @@ const MODEL_NAME_MAP = {
     'claude-sonnet-4-5-thinking': 'gemini-claude-sonnet-4-5-thinking'
 };
 
-// 不支持的模型列表
+// List of unsupported models
 const UNSUPPORTED_MODELS = ['chat_20706', 'chat_23310', 'gemini-2.5-flash-thinking', 'gemini-3-pro-low', 'gemini-2.5-pro'];
 
 /**
- * 将别名转换为真实模型名
+ * Convert alias to real model name
  */
 function alias2ModelName(modelName) {
     return MODEL_ALIAS_MAP[modelName] || modelName;
 }
 
 /**
- * 将真实模型名转换为别名
+ * Convert real model name to alias
  */
 function modelName2Alias(modelName) {
     if (UNSUPPORTED_MODELS.includes(modelName)) {
@@ -89,14 +89,14 @@ function modelName2Alias(modelName) {
 }
 
 /**
- * 生成随机请求ID
+ * Generate Random Request ID
  */
 function generateRequestID() {
     return 'agent-' + uuidv4();
 }
 
 /**
- * 生成随机会话ID
+ * Generate Random Session ID
  */
 function generateSessionID() {
     const n = Math.floor(Math.random() * 9000000000000000000);
@@ -104,7 +104,7 @@ function generateSessionID() {
 }
 
 /**
- * 生成随机项目ID
+ * Generate Random Project ID
  */
 function generateProjectID() {
     const adjectives = ['useful', 'bright', 'swift', 'calm', 'bold'];
@@ -116,32 +116,32 @@ function generateProjectID() {
 }
 
 /**
- * 将 Gemini 格式请求转换为 Antigravity 格式
+ * Convert Gemini format request to Antigravity format
  */
 function geminiToAntigravity(modelName, payload, projectId) {
-    // 深拷贝请求体,避免修改原始对象
+    // Deep copy request body to avoid modifying original object
     let template = JSON.parse(JSON.stringify(payload));
 
-    // 设置基本字段
+    // Set basic fields
     template.model = modelName;
     template.userAgent = 'antigravity';
     template.project = projectId || generateProjectID();
     template.requestId = generateRequestID();
 
-    // 确保 request 对象存在
+    // Ensure request object exists
     if (!template.request) {
         template.request = {};
     }
 
-    // 设置会话ID
-    template.request.sessionId = generateSessionID();
+    // Set Session ID - use stable PLUGIN_SESSION_ID for multi-turn conversations
+    template.request.sessionId = PLUGIN_SESSION_ID;
 
-    // 删除安全设置
+    // Remove safety settings
     if (template.request.safetySettings) {
         delete template.request.safetySettings;
     }
 
-    // 设置工具配置
+    // Set tool config
     if (template.request.toolConfig) {
         if (!template.request.toolConfig.functionCallingConfig) {
             template.request.toolConfig.functionCallingConfig = {};
@@ -149,34 +149,60 @@ function geminiToAntigravity(modelName, payload, projectId) {
         template.request.toolConfig.functionCallingConfig.mode = 'VALIDATED';
     }
 
-    // 删除 maxOutputTokens
+    // Remove maxOutputTokens (but keep for Claude thinking models)
     if (template.request.generationConfig && template.request.generationConfig.maxOutputTokens) {
-        delete template.request.generationConfig.maxOutputTokens;
+        const isClaudeThinking = modelName.toLowerCase().includes('claude') && modelName.toLowerCase().includes('thinking');
+        if (!isClaudeThinking) {
+            delete template.request.generationConfig.maxOutputTokens;
+        }
     }
 
-    // 处理 Thinking 配置
+    // Handle Thinking Config
     if (template.request.generationConfig && template.request.generationConfig.thinkingConfig) {
-        console.log(`[Antigravity Transform] Model: ${modelName}, thinkingConfig BEFORE:`, JSON.stringify(template.request.generationConfig.thinkingConfig, null, 2));
+        const isClaudeModel = modelName.toLowerCase().includes('claude');
+        const isClaudeThinking = isClaudeModel && modelName.toLowerCase().includes('thinking');
 
         if (!modelName.startsWith('gemini-3-')) {
             // For non-Gemini-3 models, we ensure thinkingBudget is set if includeThoughts is true
-            if (template.request.generationConfig.thinkingConfig.includeThoughts &&
-                (!template.request.generationConfig.thinkingConfig.thinkingBudget || template.request.generationConfig.thinkingConfig.thinkingBudget === -1)) {
+            const tc = template.request.generationConfig.thinkingConfig;
+            const includeThoughts = tc.includeThoughts ?? tc.include_thoughts;
+            const thinkingBudget = tc.thinkingBudget ?? tc.thinking_budget;
+
+            if (includeThoughts && (!thinkingBudget || thinkingBudget === -1)) {
                 // Set a reasonable default budget if not specified
-                template.request.generationConfig.thinkingConfig.thinkingBudget = 16000;
+                tc.thinkingBudget = 16000;
             }
 
-            if (template.request.generationConfig.thinkingConfig.thinkingLevel) {
-                delete template.request.generationConfig.thinkingConfig.thinkingLevel;
+            if (tc.thinkingLevel) {
+                delete tc.thinkingLevel;
             }
         }
 
-        console.log(`[Antigravity Transform] Model: ${modelName}, thinkingConfig AFTER:`, JSON.stringify(template.request.generationConfig.thinkingConfig, null, 2));
+        // Claude models require snake_case keys for thinkingConfig
+        if (isClaudeThinking) {
+            const tc = template.request.generationConfig.thinkingConfig;
+            const budget = tc.thinkingBudget ?? tc.thinking_budget ?? 16000;
+            const convertedConfig = {
+                include_thoughts: tc.includeThoughts ?? tc.include_thoughts ?? true,
+                thinking_budget: budget
+            };
+            template.request.generationConfig.thinkingConfig = convertedConfig;
+
+            // Ensure maxOutputTokens is sufficient for thinking (Reference: CLAUDE_THINKING_MAX_OUTPUT_TOKENS = 64000)
+            let currentMax = template.request.generationConfig.maxOutputTokens;
+            if (!currentMax || currentMax <= budget || currentMax > 64000) {
+                template.request.generationConfig.maxOutputTokens = 64000;
+            }
+        }
+
+        // Phase 2: Attach cached signature if available (for multi-turn conversations)
+        // Note: this.signatureCache is not available here since geminiToAntigravity is a standalone function
+        // The signature attachment happens in generateContent/generateContentStream methods
     } else {
-        console.log(`[Antigravity Transform] Model: ${modelName}, NO thinkingConfig in generationConfig`);
+        // console.log(`[Antigravity Transform] Model: ${modelName}, NO thinkingConfig in generationConfig`);
     }
 
-    // 处理 Claude Sonnet 模型的工具声明
+    // Handle tool declarations for Claude Sonnet models
     if (modelName.startsWith('claude-sonnet-')) {
         if (template.request.tools && Array.isArray(template.request.tools)) {
             template.request.tools.forEach(tool => {
@@ -197,10 +223,28 @@ function geminiToAntigravity(modelName, payload, projectId) {
 }
 
 /**
- * 将 Antigravity 响应转换为 Gemini 格式
+ * Convert Antigravity response to Gemini format
  */
 function toGeminiApiResponse(antigravityResponse) {
     if (!antigravityResponse) return null;
+
+    // DEBUG: Check for thinking parts in raw response
+    // if (antigravityResponse.candidates) {
+    //     antigravityResponse.candidates.forEach((candidate, cIdx) => {
+    //         if (candidate.content?.parts) {
+    //             candidate.content.parts.forEach((part, pIdx) => {
+    //                 if (part.thought || part.type === 'thinking' || part.thoughtSignature) {
+    //                     console.log(`[Antigravity DEBUG] Candidate ${cIdx}, Part ${pIdx} has thinking:`, {
+    //                         thought: part.thought,
+    //                         type: part.type,
+    //                         hasThoughtSignature: !!part.thoughtSignature,
+    //                         textLength: part.text?.length || 0
+    //                     });
+    //                 }
+    //             });
+    //         }
+    //     });
+    // }
 
     const compliantResponse = {
         candidates: antigravityResponse.candidates
@@ -222,7 +266,7 @@ function toGeminiApiResponse(antigravityResponse) {
 }
 
 /**
- * 确保请求体中的内容部分都有角色属性
+ * Ensure content parts in request body have role attribute
  */
 function ensureRolesInContents(requestBody) {
     delete requestBody.model;
@@ -285,7 +329,7 @@ function buildThinkingWarmupBody(modelName, requestBody, isClaudeThinking) {
 
 export class AntigravityApiService {
     constructor(config) {
-        // 配置 OAuth2Client 使用自定义的 HTTP agent
+        // Configure OAuth2Client to use custom HTTP agent
         this.authClient = new OAuth2Client({
             clientId: OAUTH_CLIENT_ID,
             clientSecret: OAUTH_CLIENT_SECRET,
@@ -299,19 +343,19 @@ export class AntigravityApiService {
         this.config = config;
         this.host = config.HOST;
         this.oauthCredsFilePath = config.ANTIGRAVITY_OAUTH_CREDS_FILE_PATH;
-        this.baseURL = ANTIGRAVITY_BASE_URL_DAILY; // 使用通用 GEMINI_BASE_URL 配置
-        this.userAgent = DEFAULT_USER_AGENT; // 支持通用 USER_AGENT 配置
+        this.baseURL = ANTIGRAVITY_BASE_URL_DAILY; // Use generic GEMINI_BASE_URL config
+        this.userAgent = DEFAULT_USER_AGENT; // Support generic USER_AGENT config
         this.projectId = config.PROJECT_ID;
 
         // NEW: Thinking support
         this.signatureCache = null;
         this.thinkingConfig = ThinkingConfig.getConfig();
 
-        // 多环境降级顺序
+        // Multi-environment fallback order
         this.baseURLs = this.baseURL ? [this.baseURL] : [
             ANTIGRAVITY_BASE_URL_DAILY,
             ANTIGRAVITY_BASE_URL_AUTOPUSH
-            // ANTIGRAVITY_BASE_URL_PROD // 生产环境已注释
+            // ANTIGRAVITY_BASE_URL_PROD // Production environment commented out
         ];
     }
 
@@ -328,13 +372,19 @@ export class AntigravityApiService {
         });
         console.log(`[Antigravity] Stable Session ID: ${PLUGIN_SESSION_ID}`);
 
+        // Phase 2: Cleanup expired signatures on startup
+        if (this.thinkingConfig.enable_signature_cache) {
+            this.signatureCache.cleanupExpired();
+            console.log('[Antigravity] Signature cache cleanup completed');
+        }
+
         await this.initializeAuth();
 
         if (!this.projectId) {
             this.projectId = await this.discoverProjectAndModels();
         } else {
             console.log(`[Antigravity] Using provided Project ID: ${this.projectId}`);
-            // 获取可用模型
+            // Get available models
             await this.fetchAvailableModels();
         }
 
@@ -343,15 +393,15 @@ export class AntigravityApiService {
     }
 
     async initializeAuth(forceRefresh = false) {
-        // 检查是否需要刷新 Token
+        // Check if Token needs refresh
         const needsRefresh = forceRefresh || this.isTokenExpiringSoon();
 
         if (this.authClient.credentials.access_token && !needsRefresh) {
-            // Token 有效且不需要刷新
+            // Token is valid and does not need refresh
             return;
         }
 
-        // Antigravity 不支持 base64 配置，直接使用文件路径
+        // Antigravity does not support base64 config, use file path directly
 
         const credPath = this.oauthCredsFilePath || path.join(os.homedir(), CREDENTIALS_DIR, CREDENTIALS_FILE);
         try {
@@ -364,7 +414,7 @@ export class AntigravityApiService {
                 console.log('[Antigravity Auth] Token expiring soon or force refresh requested. Refreshing token...');
                 const { credentials: newCredentials } = await this.authClient.refreshAccessToken();
                 this.authClient.setCredentials(newCredentials);
-                // 保存刷新后的凭证到文件
+                // Save refreshed credentials to file
                 await fs.writeFile(credPath, JSON.stringify(newCredentials, null, 2));
                 console.log(`[Antigravity Auth] Token refreshed and saved to ${credPath} successfully.`);
             }
@@ -396,12 +446,12 @@ export class AntigravityApiService {
                 scope: ['https://www.googleapis.com/auth/cloud-platform']
             });
 
-            console.log('\n[Antigravity Auth] Открываю браузер для авторизации...');
-            console.log('[Antigravity Auth] Ссылка для авторизации:', authUrl, '\n');
+            console.log('\n[Antigravity Auth] Opening browser for authentication...');
+            console.log('[Antigravity Auth] Authorization link:', authUrl, '\n');
 
-            // 自动打开浏览器
+            // Automatically open browser
             const showFallbackMessage = () => {
-                console.log('[Antigravity Auth] Не удалось автоматически открыть браузер. Откройте ссылку выше вручную.');
+                console.log('[Antigravity Auth] Failed to automatically open browser. Please open the link above manually.');
             };
 
             if (this.config) {
@@ -504,7 +554,7 @@ export class AntigravityApiService {
             // Check if we already have a project ID from the response
             if (loadResponse.cloudaicompanionProject) {
                 console.log(`[Antigravity] Discovered existing Project ID: ${loadResponse.cloudaicompanionProject}`);
-                // 获取可用模型
+                // Get available models
                 await this.fetchAvailableModels();
                 return loadResponse.cloudaicompanionProject;
             }
@@ -537,7 +587,7 @@ export class AntigravityApiService {
 
             const discoveredProjectId = lroResponse.response?.cloudaicompanionProject?.id || initialProjectId;
             console.log(`[Antigravity] Onboarded and discovered Project ID: ${discoveredProjectId}`);
-            // 获取可用模型
+            // Get available models
             await this.fetchAvailableModels();
             return discoveredProjectId;
         } catch (error) {
@@ -545,7 +595,7 @@ export class AntigravityApiService {
             console.log('[Antigravity] Falling back to generated Project ID as last resort...');
             const fallbackProjectId = generateProjectID();
             console.log(`[Antigravity] Generated fallback Project ID: ${fallbackProjectId}`);
-            // 获取可用模型
+            // Get available models
             await this.fetchAvailableModels();
             return fallbackProjectId;
         }
@@ -637,20 +687,15 @@ export class AntigravityApiService {
         const baseURL = this.baseURLs[baseURLIndex];
 
         try {
-            // Debug logging for request body
-            if (body.generationConfig?.thinkingConfig) {
-                console.log('[Antigravity] Request with thinkingConfig:', JSON.stringify({
-                    model: body.model,
-                    thinkingConfig: body.generationConfig.thinkingConfig
-                }, null, 2));
-            }
-
             const requestOptions = {
                 url: `${baseURL}/${ANTIGRAVITY_API_VERSION}:${method}`,
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'User-Agent': this.userAgent
+                    'User-Agent': this.userAgent,
+                    // Missing headers from reference project to potentially enable thinking
+                    'X-Goog-Api-Client': 'google-cloud-sdk vscode_cloudshelleditor/0.1',
+                    'Client-Metadata': '{"ideType":"IDE_UNSPECIFIED","platform":"PLATFORM_UNSPECIFIED","pluginType":"GEMINI"}'
                 },
                 responseType: 'json',
                 body: JSON.stringify(body)
@@ -713,7 +758,10 @@ export class AntigravityApiService {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'text/event-stream',
-                    'User-Agent': this.userAgent
+                    'User-Agent': this.userAgent,
+                    // Missing headers from reference project
+                    'X-Goog-Api-Client': 'google-cloud-sdk vscode_cloudshelleditor/0.1',
+                    'Client-Metadata': '{"ideType":"IDE_UNSPECIFIED","platform":"PLATFORM_UNSPECIFIED","pluginType":"GEMINI"}'
                 },
                 responseType: 'stream',
                 body: JSON.stringify(body)
@@ -886,14 +934,14 @@ export class AntigravityApiService {
             selectedModel = this.availableModels[0];
         }
 
-        // 深拷贝请求体
+        // Deep copy request body
         const processedRequestBody = ensureRolesInContents(JSON.parse(JSON.stringify(requestBody)));
         const actualModelName = alias2ModelName(selectedModel);
 
-        // 将处理后的请求体转换为 Antigravity 格式
+        // Convert processed request body to Antigravity format
         const payload = geminiToAntigravity(actualModelName, { request: processedRequestBody }, this.projectId);
 
-        // 设置模型名称为实际模型名
+        // Set model name to actual model name
         payload.model = actualModelName;
 
         // NEW: Thinking Warmup
@@ -915,6 +963,23 @@ export class AntigravityApiService {
                     console.warn(`[Antigravity] Warmup failed for ${sessionId}, proceeding anyway`);
                 } else {
                     console.log(`[Antigravity] Warmup succeeded for ${sessionId}`);
+                }
+
+                // Phase 2: Verify cached signature is available (for future multi-turn use)
+                if (this.thinkingConfig.enable_signature_cache) {
+                    const cachedSignature = this.signatureCache?.get(
+                        PLUGIN_SESSION_ID,
+                        actualModelName,
+                        conversationKey,
+                        "Warmup request for thinking signature."
+                    );
+
+                    if (cachedSignature) {
+                        console.log(`[Antigravity] Cached signature available for ${sessionId} (length: ${cachedSignature.length})`);
+                        // Note: Signature is used for filtering history thinking blocks, not for thinkingConfig
+                    } else {
+                        console.log(`[Antigravity] No cached signature for ${sessionId}`);
+                    }
                 }
             }
         }
@@ -932,14 +997,14 @@ export class AntigravityApiService {
             selectedModel = this.availableModels[0];
         }
 
-        // 深拷贝请求体
+        // Deep copy request body
         const processedRequestBody = ensureRolesInContents(JSON.parse(JSON.stringify(requestBody)));
         const actualModelName = alias2ModelName(selectedModel);
 
-        // 将处理后的请求体转换为 Antigravity 格式
+        // Convert processed request body to Antigravity format
         const payload = geminiToAntigravity(actualModelName, { request: processedRequestBody }, this.projectId);
 
-        // 设置模型名称为实际模型名
+        // Set model name to actual model name
         payload.model = actualModelName;
 
         // NEW: Thinking Warmup
@@ -962,11 +1027,47 @@ export class AntigravityApiService {
                 } else {
                     console.log(`[Antigravity] Warmup succeeded for ${sessionId}`);
                 }
+
+                // Phase 2: Verify cached signature is available (for future multi-turn use)
+                if (this.thinkingConfig.enable_signature_cache) {
+                    const cachedSignature = this.signatureCache?.get(
+                        PLUGIN_SESSION_ID,
+                        actualModelName,
+                        conversationKey,
+                        "Warmup request for thinking signature."
+                    );
+
+                    if (cachedSignature) {
+                        console.log(`[Antigravity] Cached signature available for ${sessionId} (length: ${cachedSignature.length})`);
+                        // Note: Signature is used for filtering history thinking blocks, not for thinkingConfig
+                    } else {
+                        console.log(`[Antigravity] No cached signature for ${sessionId}`);
+                    }
+                }
             }
         }
 
+        // Store conversation key for signature extraction
+        const conversationKeyForCache = ThinkingUtils.extractConversationKey(payload);
+
         const stream = this.streamApi('streamGenerateContent', payload);
         for await (const chunk of stream) {
+            // Phase 2: Extract and cache signature from SSE response
+            if (this.thinkingConfig.enable_signature_cache) {
+                const signature = ThinkingUtils.extractSignatureFromSseChunk(chunk.response || chunk);
+
+                if (signature) {
+                    this.signatureCache?.cache(
+                        PLUGIN_SESSION_ID,
+                        actualModelName,
+                        conversationKeyForCache,
+                        "Warmup request for thinking signature.",
+                        signature
+                    );
+                    console.log(`[Antigravity] Cached signature from SSE response`);
+                }
+            }
+
             yield toGeminiApiResponse(chunk.response);
         }
     }
@@ -982,4 +1083,50 @@ export class AntigravityApiService {
             return false;
         }
     }
+
+    /**
+     * Phase 2: Graceful shutdown - flush signature cache to disk
+     */
+    async shutdown() {
+        console.log('[Antigravity] Shutting down...');
+        if (this.signatureCache) {
+            await this.signatureCache.flushToDisk();
+            console.log('[Antigravity] Signature cache flushed to disk');
+        }
+        console.log('[Antigravity] Shutdown complete');
+    }
 }
+
+// Phase 2: Handle graceful shutdown
+let antigravityInstance = null;
+
+/**
+ * Set the Antigravity instance for shutdown handling
+ */
+export function setAntigravityInstance(instance) {
+    antigravityInstance = instance;
+}
+
+/**
+ * Get the current Antigravity instance
+ */
+export function getAntigravityInstance() {
+    return antigravityInstance;
+}
+
+// Handle SIGTERM/SIGINT for graceful shutdown
+process.on('SIGTERM', async () => {
+    console.log('[Antigravity] Received SIGTERM');
+    if (antigravityInstance) {
+        await antigravityInstance.shutdown();
+    }
+    process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+    console.log('[Antigravity] Received SIGINT');
+    if (antigravityInstance) {
+        await antigravityInstance.shutdown();
+    }
+    process.exit(0);
+});

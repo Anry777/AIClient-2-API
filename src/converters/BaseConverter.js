@@ -41,9 +41,10 @@ export class BaseConverter {
      * @param {Object} chunk - 流式响应块
      * @param {string} targetProtocol - 目标协议
      * @param {string} model - 模型名称
+     * @param {string} [requestId] - 请求ID
      * @returns {Object} 转换后的流式响应块
      */
-    convertStreamChunk(chunk, targetProtocol, model) {
+    convertStreamChunk(chunk, targetProtocol, model, requestId) {
         throw new Error('convertStreamChunk方法必须被子类实现');
     }
 
@@ -61,8 +62,28 @@ export class BaseConverter {
      * 获取协议名称
      * @returns {string} 协议名称
      */
-    getProtocolName() {
-        return this.protocolName;
+    /**
+     * 通用转换入口
+     * @param {object} data - 要转换的数据
+     * @param {string} type - 转换类型
+     * @param {string} targetProtocol - 目标协议
+     * @param {string} [model] - 模型名称
+     * @param {string} [requestId] - 请求ID
+     * @returns {object} 转换后的数据
+     */
+    convert(data, type, targetProtocol, model, requestId) {
+        switch (type) {
+            case 'request':
+                return this.convertRequest(data, targetProtocol);
+            case 'response':
+                return this.convertResponse(data, targetProtocol, model);
+            case 'streamChunk':
+                return this.convertStreamChunk(data, targetProtocol, model, requestId);
+            case 'modelList':
+                return this.convertModelList(data, targetProtocol);
+            default:
+                throw new Error(`Unknown conversion type: ${type}`);
+        }
     }
 }
 

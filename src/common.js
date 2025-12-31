@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import * as path from 'path';
 import * as http from 'http'; // Add http for IncomingMessage and ServerResponse types
 import * as crypto from 'crypto'; // Import crypto for MD5 hashing
+import { v4 as uuidv4 } from 'uuid';
 import { ApiServiceAdapter } from './adapter.js'; // Import ApiServiceAdapter
 import { convertData, getOpenAIStreamChunkStop, getOpenAIResponsesStreamChunkBegin, getOpenAIResponsesStreamChunkEnd } from './convert.js';
 import { ProviderStrategyFactory } from './provider-strategies.js';
@@ -111,7 +112,7 @@ export async function logConversation(type, content, logMode, logFilename) {
     if (isConsole) {
         console.log(logEntry);
     }
-    
+
     if (isFile && logFilename) {
         try {
             // Append to the file
@@ -197,7 +198,10 @@ export async function handleStreamRequest(res, service, model, requestBody, from
     requestBody.model = model;
     const nativeStream = await service.generateContentStream(model, requestBody);
     const addEvent = getProtocolPrefix(fromProvider) === MODEL_PROTOCOL_PREFIX.CLAUDE || getProtocolPrefix(fromProvider) === MODEL_PROTOCOL_PREFIX.OPENAI_RESPONSES;
-    const openStop = getProtocolPrefix(fromProvider) === MODEL_PROTOCOL_PREFIX.OPENAI ;
+    const openStop = getProtocolPrefix(fromProvider) === MODEL_PROTOCOL_PREFIX.OPENAI;
+
+    // Generate a stable request ID for the entire stream
+    const requestId = `chatcmpl-${uuidv4()}`;
 
     try {
         for await (const nativeChunk of nativeStream) {
@@ -209,7 +213,7 @@ export async function handleStreamRequest(res, service, model, requestBody, from
 
             // Convert the complete chunk object to the client's format (fromProvider), if necessary.
             const chunkToSend = needsConversion
-                ? convertData(nativeChunk, 'streamChunk', toProvider, fromProvider, model)
+                ? convertData(nativeChunk, 'streamChunk', toProvider, fromProvider, model, requestId)
                 : nativeChunk;
 
             if (!chunkToSend) {
@@ -246,7 +250,7 @@ export async function handleStreamRequest(res, service, model, requestBody, from
             });
         }
 
-    }  catch (error) {
+    } catch (error) {
         console.error('\n[Server] Error during stream processing:', error.stack);
         if (providerPoolManager && pooluuid) {
             console.log(`[Provider Pool] Marking ${toProvider} as unhealthy due to stream error`);
@@ -273,13 +277,13 @@ export async function handleStreamRequest(res, service, model, requestBody, from
 
 
 export async function handleUnaryRequest(res, service, model, requestBody, fromProvider, toProvider, PROMPT_LOG_MODE, PROMPT_LOG_FILENAME, providerPoolManager, pooluuid) {
-    try{
+    try {
         // The service returns the response in its native format (toProvider).
         const needsConversion = getProtocolPrefix(fromProvider) !== getProtocolPrefix(toProvider);
         requestBody.model = model;
         // fs.writeFile('oldRequest'+Date.now()+'.json', JSON.stringify(requestBody));
         const nativeResponse = await service.generateContent(model, requestBody);
-        
+
         if (PROMPT_LOG_MODE === 'all') {
             console.log('[DEBUG] Native Response:', JSON.stringify(nativeResponse, null, 2));
         }
@@ -297,7 +301,7 @@ export async function handleUnaryRequest(res, service, model, requestBody, fromP
         await handleUnifiedResponse(res, JSON.stringify(clientResponse), false);
         await logConversation('output', responseText, PROMPT_LOG_MODE, PROMPT_LOG_FILENAME);
         // fs.writeFile('oldResponse'+Date.now()+'.json', JSON.stringify(clientResponse));
-        
+
         // 一元请求成功完成，统计使用次数，错误次数重置为0
         if (providerPoolManager && pooluuid) {
             console.log(`[Provider Pool] Increasing usage count for ${toProvider} (${pooluuid}) after successful unary request`);
@@ -332,7 +336,7 @@ export async function handleUnaryRequest(res, service, model, requestBody, fromP
  * @param {Object} CONFIG - The server configuration object.
  */
 export async function handleModelListRequest(req, res, service, endpointType, CONFIG, providerPoolManager, pooluuid) {
-    try{
+    try {
         const clientProviderMap = {
             [ENDPOINT_TYPE.OPENAI_MODEL_LIST]: MODEL_PROTOCOL_PREFIX.OPENAI,
             [ENDPOINT_TYPE.GEMINI_MODEL_LIST]: MODEL_PROTOCOL_PREFIX.GEMINI,
@@ -348,7 +352,7 @@ export async function handleModelListRequest(req, res, service, endpointType, CO
 
         // 1. Get the model list in the backend's native format.
         const nativeModelList = await service.listModels();
-                
+
         // 2. Convert the model list to the client's expected format, if necessary.
         let clientModelList = nativeModelList;
         if (!getProtocolPrefix(toProvider).includes(getProtocolPrefix(fromProvider))) {
@@ -398,7 +402,7 @@ export async function handleContentGenerationRequest(req, res, service, endpoint
 
     const fromProvider = clientProviderMap[endpointType];
     const toProvider = CONFIG.MODEL_PROVIDER;
-    
+
     if (!fromProvider) {
         throw new Error(`Unsupported endpoint type for content generation: ${endpointType}`);
     }
@@ -436,7 +440,7 @@ export async function handleContentGenerationRequest(req, res, service, endpoint
     // 4. Log the incoming prompt (after potential conversion to the backend's format).
     const promptText = extractPromptText(processedRequestBody, toProvider);
     await logConversation('input', promptText, CONFIG.PROMPT_LOG_MODE, PROMPT_LOG_FILENAME);
-    
+
     // 5. Call the appropriate stream or unary handler, passing the provider info.
     if (isStream) {
         await handleStreamRequest(res, service, model, processedRequestBody, fromProvider, toProvider, CONFIG.PROMPT_LOG_MODE, PROMPT_LOG_FILENAME, providerPoolManager, pooluuid);
@@ -638,7 +642,7 @@ function createErrorResponse(error, fromProvider) {
     const protocolPrefix = getProtocolPrefix(fromProvider);
     const statusCode = error.status || error.code || 500;
     const errorMessage = error.message || "An error occurred during processing.";
-    
+
     // 根据 HTTP 状态码映射错误类型
     const getErrorType = (code) => {
         if (code === 401) return 'authentication_error';
@@ -647,7 +651,7 @@ function createErrorResponse(error, fromProvider) {
         if (code >= 500) return 'server_error';
         return 'invalid_request_error';
     };
-    
+
     // 根据 HTTP 状态码映射 Gemini 的 status
     const getGeminiStatus = (code) => {
         if (code === 400) return 'INVALID_ARGUMENT';
@@ -658,7 +662,7 @@ function createErrorResponse(error, fromProvider) {
         if (code >= 500) return 'INTERNAL';
         return 'UNKNOWN';
     };
-    
+
     switch (protocolPrefix) {
         case MODEL_PROTOCOL_PREFIX.OPENAI:
             // OpenAI 非流式错误格式
@@ -669,7 +673,7 @@ function createErrorResponse(error, fromProvider) {
                     code: getErrorType(statusCode)  // OpenAI 使用 code 字段作为核心判断
                 }
             };
-            
+
         case MODEL_PROTOCOL_PREFIX.OPENAI_RESPONSES:
             // OpenAI Responses API 非流式错误格式
             return {
@@ -679,7 +683,7 @@ function createErrorResponse(error, fromProvider) {
                     code: getErrorType(statusCode)
                 }
             };
-            
+
         case MODEL_PROTOCOL_PREFIX.CLAUDE:
             // Claude 非流式错误格式（外层有 type 标记）
             return {
@@ -689,7 +693,7 @@ function createErrorResponse(error, fromProvider) {
                     message: errorMessage
                 }
             };
-            
+
         case MODEL_PROTOCOL_PREFIX.GEMINI:
             // Gemini 非流式错误格式（遵循 Google Cloud 标准）
             return {
@@ -699,7 +703,7 @@ function createErrorResponse(error, fromProvider) {
                     status: getGeminiStatus(statusCode)  // Gemini 使用 status 作为核心判断
                 }
             };
-            
+
         default:
             // 默认使用 OpenAI 格式
             return {
@@ -722,7 +726,7 @@ function createStreamErrorResponse(error, fromProvider) {
     const protocolPrefix = getProtocolPrefix(fromProvider);
     const statusCode = error.status || error.code || 500;
     const errorMessage = error.message || "An error occurred during streaming.";
-    
+
     // 根据 HTTP 状态码映射错误类型
     const getErrorType = (code) => {
         if (code === 401) return 'authentication_error';
@@ -731,7 +735,7 @@ function createStreamErrorResponse(error, fromProvider) {
         if (code >= 500) return 'server_error';
         return 'invalid_request_error';
     };
-    
+
     // 根据 HTTP 状态码映射 Gemini 的 status
     const getGeminiStatus = (code) => {
         if (code === 400) return 'INVALID_ARGUMENT';
@@ -742,7 +746,7 @@ function createStreamErrorResponse(error, fromProvider) {
         if (code >= 500) return 'INTERNAL';
         return 'UNKNOWN';
     };
-    
+
     switch (protocolPrefix) {
         case MODEL_PROTOCOL_PREFIX.OPENAI:
             // OpenAI 流式错误格式（SSE data 块）
@@ -754,7 +758,7 @@ function createStreamErrorResponse(error, fromProvider) {
                 }
             };
             return `data: ${JSON.stringify(openaiError)}\n\n`;
-            
+
         case MODEL_PROTOCOL_PREFIX.OPENAI_RESPONSES:
             // OpenAI Responses API 流式错误格式（SSE event + data）
             const responsesError = {
@@ -768,7 +772,7 @@ function createStreamErrorResponse(error, fromProvider) {
                 }
             };
             return `event: error\ndata: ${JSON.stringify(responsesError)}\n\n`;
-            
+
         case MODEL_PROTOCOL_PREFIX.CLAUDE:
             // Claude 流式错误格式（SSE event + data）
             const claudeError = {
@@ -779,7 +783,7 @@ function createStreamErrorResponse(error, fromProvider) {
                 }
             };
             return `event: error\ndata: ${JSON.stringify(claudeError)}\n\n`;
-            
+
         case MODEL_PROTOCOL_PREFIX.GEMINI:
             // Gemini 流式错误格式
             // 注意：虽然 Gemini 原生使用 JSON 数组，但在我们的实现中已经转换为 SSE 格式
@@ -792,7 +796,7 @@ function createStreamErrorResponse(error, fromProvider) {
                 }
             };
             return `data: ${JSON.stringify(geminiError)}\n\n`;
-            
+
         default:
             // 默认使用 OpenAI SSE 格式
             const defaultError = {

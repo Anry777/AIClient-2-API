@@ -1,6 +1,6 @@
 /**
- * OpenAI转换器
- * 处理OpenAI协议与其他协议之间的转换
+ * OpenAI Converter
+ * Handles conversion between OpenAI protocol and other protocols
  */
 
 import { v4 as uuidv4 } from 'uuid';
@@ -35,8 +35,8 @@ import {
 } from '../../openai/openai-responses-core.mjs';
 
 /**
- * OpenAI转换器类
- * 实现OpenAI协议到其他协议的转换
+ * OpenAI Converter Class
+ * Implements conversion from OpenAI protocol to other protocols
  */
 export class OpenAIConverter extends BaseConverter {
     constructor() {
@@ -44,7 +44,7 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * 转换请求
+     * Convert Request
      */
     convertRequest(data, targetProtocol) {
         switch (targetProtocol) {
@@ -60,11 +60,11 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * 转换响应
+     * Convert Response
      */
     convertResponse(data, targetProtocol, model) {
-        // OpenAI作为源格式时，通常不需要转换响应
-        // 因为其他协议会转换到OpenAI格式
+        // When OpenAI is the source format, response conversion is usually not needed
+        // because other protocols will convert to OpenAI format
         switch (targetProtocol) {
             case MODEL_PROTOCOL_PREFIX.CLAUDE:
                 return this.toClaudeResponse(data, model);
@@ -78,7 +78,7 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * 转换流式响应块
+     * Convert Stream Chunk
      */
     convertStreamChunk(chunk, targetProtocol, model) {
         switch (targetProtocol) {
@@ -94,7 +94,7 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * 转换模型列表
+     * Convert Model List
      */
     convertModelList(data, targetProtocol) {
         switch (targetProtocol) {
@@ -108,11 +108,11 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     // =========================================================================
-    // OpenAI -> Claude 转换
+    // OpenAI -> Claude Conversion
     // =========================================================================
 
     /**
-     * OpenAI请求 -> Claude请求
+     * OpenAI Request -> Claude Request
      */
     toClaudeRequest(openaiRequest) {
         const messages = openaiRequest.messages || [];
@@ -125,7 +125,7 @@ export class OpenAIConverter extends BaseConverter {
             let content = [];
 
             if (message.role === 'tool') {
-                // 工具结果消息
+                // Tool result message
                 content.push({
                     type: 'tool_result',
                     tool_use_id: message.tool_call_id,
@@ -133,7 +133,7 @@ export class OpenAIConverter extends BaseConverter {
                 });
                 claudeMessages.push({ role: 'user', content: content });
             } else if (message.role === 'assistant' && (message.tool_calls?.length || message.function_calls?.length)) {
-                // 助手工具调用消息 - 支持tool_calls和function_calls
+                // Assistant tool call message - supports tool_calls and function_calls
                 const calls = message.tool_calls || message.function_calls || [];
                 const toolUseBlocks = calls.map(tc => ({
                     type: 'tool_use',
@@ -143,7 +143,7 @@ export class OpenAIConverter extends BaseConverter {
                 }));
                 claudeMessages.push({ role: 'assistant', content: toolUseBlocks });
             } else {
-                // 普通消息
+                // Normal message
                 if (typeof message.content === 'string') {
                     if (message.content) {
                         content.push({ type: 'text', text: message.content.trim() });
@@ -194,7 +194,7 @@ export class OpenAIConverter extends BaseConverter {
                 }
             }
         }
-        // 合并相邻相同 role 的消息
+        // Merge adjacent messages with the same role
         const mergedClaudeMessages = [];
         for (let i = 0; i < claudeMessages.length; i++) {
             const currentMessage = claudeMessages[i];
@@ -204,7 +204,7 @@ export class OpenAIConverter extends BaseConverter {
             } else {
                 const lastMessage = mergedClaudeMessages[mergedClaudeMessages.length - 1];
 
-                // 如果当前消息的 role 与上一条消息的 role 相同，则合并 content 数组
+                // If current message role matches last message role, merge content arrays
                 if (lastMessage.role === currentMessage.role) {
                     lastMessage.content = lastMessage.content.concat(currentMessage.content);
                 } else {
@@ -213,15 +213,15 @@ export class OpenAIConverter extends BaseConverter {
             }
         }
 
-        // 清理最后一条 assistant 消息的尾部空白
+        // Clean up trailing whitespace from the last assistant message
         if (mergedClaudeMessages.length > 0) {
             const lastMessage = mergedClaudeMessages[mergedClaudeMessages.length - 1];
             if (lastMessage.role === 'assistant' && Array.isArray(lastMessage.content)) {
-                // 从后往前找到最后一个 text 类型的内容块
+                // Find the last text content block from back to front
                 for (let i = lastMessage.content.length - 1; i >= 0; i--) {
                     const contentBlock = lastMessage.content[i];
                     if (contentBlock.type === 'text' && contentBlock.text) {
-                        // 移除尾部空白字符
+                        // Remove trailing whitespace characters
                         contentBlock.text = contentBlock.text.trimEnd();
                         break;
                     }
@@ -255,7 +255,7 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * OpenAI响应 -> Claude响应
+     * OpenAI Response -> Claude Response
      */
     toClaudeResponse(openaiResponse, model) {
         if (!openaiResponse || !openaiResponse.choices || openaiResponse.choices.length === 0) {
@@ -277,7 +277,7 @@ export class OpenAIConverter extends BaseConverter {
         const choice = openaiResponse.choices[0];
         const contentList = [];
 
-        // 处理工具调用 - 支持tool_calls和function_calls
+        // Handle tool calls - supports tool_calls and function_calls
         const toolCalls = choice.message?.tool_calls || choice.message?.function_calls || [];
         for (const toolCall of toolCalls.filter(tc => tc && typeof tc === 'object')) {
             if (toolCall.function) {
@@ -298,7 +298,7 @@ export class OpenAIConverter extends BaseConverter {
             }
         }
 
-        // 处理reasoning_content（推理内容）
+        // Handle reasoning_content (thinking content)
         const reasoningContent = choice.message?.reasoning_content || "";
         if (reasoningContent) {
             contentList.push({
@@ -307,7 +307,7 @@ export class OpenAIConverter extends BaseConverter {
             });
         }
 
-        // 处理文本内容
+        // Handle text content
         const contentText = choice.message?.content || "";
         if (contentText) {
             const extractedContent = extractThinkingFromOpenAIText(contentText);
@@ -318,7 +318,7 @@ export class OpenAIConverter extends BaseConverter {
             }
         }
 
-        // 映射结束原因
+        // Map finish reason
         const stopReason = mapFinishReason(
             choice.finish_reason || "stop",
             "openai",
@@ -343,15 +343,15 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * OpenAI流式响应 -> Claude流式响应
+     * OpenAI Stream Chunk -> Claude Stream Chunk
      *
-     * 这个方法实现了与 ClaudeConverter.toOpenAIStreamChunk 相反的转换逻辑
-     * 将 OpenAI 的流式 chunk 转换为 Claude 的流式事件
+     * This method implements the reverse conversion logic of ClaudeConverter.toOpenAIStreamChunk
+     * Converts OpenAI stream chunks to Claude stream events
      */
     toClaudeStreamChunk(openaiChunk, model) {
         if (!openaiChunk) return null;
 
-        // 处理 OpenAI chunk 对象
+        // Handle OpenAI chunk object
         if (typeof openaiChunk === 'object' && !Array.isArray(openaiChunk)) {
             const choice = openaiChunk.choices?.[0];
             if (!choice) {
@@ -362,8 +362,8 @@ export class OpenAIConverter extends BaseConverter {
             const finishReason = choice.finish_reason;
             const events = [];
 
-            // 注释部分是为了兼容claude code，但是不兼容cherry studio
-            // 1. 处理 role (对应 message_start) 
+            // Commented out section is for compatibility with claude code, but not cherry studio
+            // 1. Handle role (corresponds to message_start)
             // if (delta?.role === "assistant") {
             //     events.push({
             //         type: "message_start",
@@ -391,11 +391,11 @@ export class OpenAIConverter extends BaseConverter {
             //     });
             // }
 
-            // 2. 处理 tool_calls (对应 content_block_start 和 content_block_delta)
+            // 2. Handle tool_calls (corresponds to content_block_start and content_block_delta)
             // if (delta?.tool_calls) {
             //     const toolCalls = delta.tool_calls;
             //     for (const toolCall of toolCalls) {
-            //         // 如果有 function.name，说明是工具调用开始
+            //         // If function.name is present, it's the start of a tool call
             //         if (toolCall.function?.name) {
             //             events.push({
             //                 type: "content_block_start",
@@ -409,7 +409,7 @@ export class OpenAIConverter extends BaseConverter {
             //             });
             //         }
 
-            //         // 如果有 function.arguments，说明是参数增量
+            //         // If function.arguments is present, it's an argument delta
             //         if (toolCall.function?.arguments) {
             //             events.push({
             //                 type: "content_block_delta",
@@ -423,10 +423,10 @@ export class OpenAIConverter extends BaseConverter {
             //     }
             // }
 
-            // 3. 处理 reasoning_content (对应 thinking 类型的 content_block)
+            // 3. Handle reasoning_content (corresponds to thinking type content_block)
             if (delta?.reasoning_content) {
-                // 注意：这里可能需要先发送 content_block_start，但由于状态管理复杂，
-                // 我们假设调用方会处理这个逻辑
+                // Note: We might need to send content_block_start first, but due to complex state management,
+                // we assume the caller handles this logic
                 events.push({
                     type: "content_block_delta",
                     index: 0,
@@ -437,7 +437,7 @@ export class OpenAIConverter extends BaseConverter {
                 });
             }
 
-            // 4. 处理普通文本 content (对应 text 类型的 content_block)
+            // 4. Handle normal text content (corresponds to text type content_block)
             if (delta?.content) {
                 events.push({
                     type: "content_block_delta",
@@ -449,9 +449,9 @@ export class OpenAIConverter extends BaseConverter {
                 });
             }
 
-            // 5. 处理 finish_reason (对应 message_delta 和 message_stop)
+            // 5. Handle finish_reason (corresponds to message_delta and message_stop)
             if (finishReason) {
-                // 映射 finish_reason
+                // Map finish reason
                 const stopReason = finishReason === "stop" ? "end_turn" :
                     finishReason === "length" ? "max_tokens" :
                         "end_turn";
@@ -460,7 +460,7 @@ export class OpenAIConverter extends BaseConverter {
                     type: "content_block_stop",
                     index: 0
                 });
-                // 发送 message_delta
+                // Send message_delta
                 events.push({
                     type: "message_delta",
                     delta: {
@@ -475,7 +475,7 @@ export class OpenAIConverter extends BaseConverter {
                     }
                 });
 
-                // 发送 message_stop
+                // Send message_stop
                 events.push({
                     type: "message_stop"
                 });
@@ -484,7 +484,7 @@ export class OpenAIConverter extends BaseConverter {
             return events.length > 0 ? events : null;
         }
 
-        // 向后兼容：处理字符串格式
+        // Backward compatibility: Handle string format
         if (typeof openaiChunk === 'string') {
             return {
                 type: "content_block_delta",
@@ -500,7 +500,7 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * OpenAI模型列表 -> Claude模型列表
+     * OpenAI Model List -> Claude Model List
      */
     toClaudeModelList(openaiModels) {
         return {
@@ -512,7 +512,7 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * 将 OpenAI 模型列表转换为 Gemini 模型列表
+     * Convert OpenAI model list to Gemini model list
      */
     toGeminiModelList(openaiModels) {
         const models = openaiModels.data || [];
@@ -530,7 +530,7 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * 构建Claude工具选择
+     * Build Claude tool choice
      */
     buildClaudeToolChoice(toolChoice) {
         if (typeof toolChoice === 'string') {
@@ -544,11 +544,39 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     // =========================================================================
-    // OpenAI -> Gemini 转换
+    // OpenAI -> OpenAI Responses Conversion
     // =========================================================================
 
     /**
-     * OpenAI请求 -> Gemini请求
+     * OpenAI Request -> OpenAI Responses Request
+     */
+    toOpenAIResponsesRequest(openaiRequest) {
+        // OpenAI Responses API is usually handled directly by the backend,
+        // but if conversion is needed, we map the fields
+        return {
+            model: openaiRequest.model,
+            instructions: extractText(extractSystemMessages(openaiRequest.messages || []).systemInstruction),
+            input: extractText(extractSystemMessages(openaiRequest.messages || []).nonSystemMessages),
+            ...openaiRequest // Pass through other parameters
+        };
+    }
+
+    /**
+     * OpenAI Response -> OpenAI Responses Response
+     */
+    toOpenAIResponsesResponse(openaiResponse, model) {
+        // This conversion is highly dependent on the specific OpenAI Responses API structure.
+        // For now, we'll assume a direct passthrough or minimal transformation.
+        // If specific mapping is needed, it would go here.
+        return openaiResponse;
+    }
+
+    // =========================================================================
+    // OpenAI -> Gemini Conversion
+    // =========================================================================
+
+    /**
+     * OpenAI Request -> Gemini Request
      */
     toGeminiRequest(openaiRequest) {
         const messages = openaiRequest.messages || [];
@@ -666,7 +694,7 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * 处理OpenAI内容到Gemini parts
+     * Process OpenAI content to Gemini parts
      */
     processOpenAIContentToGeminiParts(content) {
         if (!content) return [];
@@ -704,7 +732,7 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * 构建Gemini工具配置
+     * Build Gemini tool config
      */
     buildGeminiToolConfig(toolChoice) {
         if (typeof toolChoice === 'string' && ['none', 'auto'].includes(toolChoice)) {
@@ -717,7 +745,7 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * 构建Gemini生成配置
+     * Build Gemini generation config
      */
     buildGeminiGenerationConfig(openaiRequest, model) {
         const { temperature, max_tokens, top_p, stop, tools, response_format, reasoning_effort } = openaiRequest;
@@ -754,7 +782,9 @@ export class OpenAIConverter extends BaseConverter {
 
         // Gemini 2.5 and thinking models require responseModalities: ["TEXT"]
         const hasTools = tools && Array.isArray(tools) && tools.length > 0;
-        if (!hasTools && model && (model.includes('2.5') || model.includes('thinking') || model.includes('2.0-flash-thinking'))) {
+        const isClaude = model && (model.includes('claude') || model.includes('opus') || model.includes('sonnet'));
+
+        if (!hasTools && !isClaude && model && (model.includes('2.5') || model.includes('thinking') || model.includes('2.0-flash-thinking'))) {
             console.log(`[OpenAI->Gemini] Adding responseModalities: ["TEXT"] for model: ${model}`);
             config.responseModalities = ["TEXT"];
         }
@@ -763,7 +793,7 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * 将OpenAI响应转换为Gemini响应格式
+     * Convert OpenAI response to Gemini response format
      */
     toGeminiResponse(openaiResponse, model) {
         if (!openaiResponse || !openaiResponse.choices || !openaiResponse.choices[0]) {
@@ -774,12 +804,12 @@ export class OpenAIConverter extends BaseConverter {
         const message = choice.message || {};
         const parts = [];
 
-        // 处理文本内容
+        // Handle text content
         if (message.content) {
             parts.push({ text: message.content });
         }
 
-        // 处理工具调用
+        // Handle tool calls
         if (message.tool_calls && message.tool_calls.length > 0) {
             for (const toolCall of message.tool_calls) {
                 if (toolCall.type === 'function') {
@@ -795,7 +825,7 @@ export class OpenAIConverter extends BaseConverter {
             }
         }
 
-        // 映射finish_reason
+        // Map finish_reason
         const finishReasonMap = {
             'stop': 'STOP',
             'length': 'MAX_TOKENS',
@@ -830,7 +860,8 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * 将OpenAI流式响应块转换为Gemini流式响应格式
+    /**
+     * Convert OpenAI stream chunk to Gemini stream chunk format
      */
     toGeminiStreamChunk(openaiChunk, model) {
         if (!openaiChunk || !openaiChunk.choices || !openaiChunk.choices[0]) {
@@ -841,12 +872,12 @@ export class OpenAIConverter extends BaseConverter {
         const delta = choice.delta || {};
         const parts = [];
 
-        // 处理文本内容
+        // Handle text content
         if (delta.content) {
             parts.push({ text: delta.content });
         }
 
-        // 处理工具调用
+        // Handle tool calls
         if (delta.tool_calls && delta.tool_calls.length > 0) {
             for (const toolCall of delta.tool_calls) {
                 if (toolCall.function) {
@@ -861,7 +892,7 @@ export class OpenAIConverter extends BaseConverter {
                                 ? JSON.parse(toolCall.function.arguments)
                                 : toolCall.function.arguments;
                         } catch (e) {
-                            // 部分参数，保持为字符串
+                            // Partial arguments, keep as string
                             functionCall.args = { partial: toolCall.function.arguments };
                         }
                     }
@@ -880,7 +911,7 @@ export class OpenAIConverter extends BaseConverter {
             }]
         };
 
-        // 添加finish_reason（如果存在）
+        // Add finish_reason (if present)
         if (choice.finish_reason) {
             const finishReasonMap = {
                 'stop': 'STOP',
@@ -891,7 +922,7 @@ export class OpenAIConverter extends BaseConverter {
             result.candidates[0].finishReason = finishReasonMap[choice.finish_reason] || 'STOP';
         }
 
-        // 添加usage信息（如果存在）
+        // Add usage info (if present)
         if (openaiChunk.usage) {
             result.usageMetadata = {
                 promptTokenCount: openaiChunk.usage.prompt_tokens || 0,
@@ -914,7 +945,7 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * 将OpenAI请求转换为OpenAI Responses格式
+     * Convert OpenAI request to OpenAI Responses format
      */
     toOpenAIResponsesRequest(openaiRequest) {
         const responsesRequest = {
@@ -922,7 +953,7 @@ export class OpenAIConverter extends BaseConverter {
             messages: []
         };
 
-        // 转换messages
+        // Convert messages
         if (openaiRequest.messages && openaiRequest.messages.length > 0) {
             responsesRequest.messages = openaiRequest.messages.map(msg => ({
                 role: msg.role,
@@ -932,7 +963,7 @@ export class OpenAIConverter extends BaseConverter {
             }));
         }
 
-        // 转换其他参数
+        // Convert other parameters
         if (openaiRequest.temperature !== undefined) {
             responsesRequest.temperature = openaiRequest.temperature;
         }
@@ -953,7 +984,7 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * 将OpenAI响应转换为OpenAI Responses格式
+     * Convert OpenAI response to OpenAI Responses format
      */
     toOpenAIResponsesResponse(openaiResponse, model) {
         if (!openaiResponse || !openaiResponse.choices || !openaiResponse.choices[0]) {
@@ -976,7 +1007,7 @@ export class OpenAIConverter extends BaseConverter {
         const message = choice.message || {};
         const output = [];
 
-        // 构建message输出
+        // Build message output
         const messageContent = [];
         if (message.content) {
             messageContent.push({
@@ -1025,8 +1056,8 @@ export class OpenAIConverter extends BaseConverter {
     }
 
     /**
-     * 将OpenAI流式响应转换为OpenAI Responses流式格式
-     * 参考 ClaudeConverter.toOpenAIResponsesStreamChunk 的实现逻辑
+     * Convert OpenAI stream response to OpenAI Responses stream format
+     * Reference ClaudeConverter.toOpenAIResponsesStreamChunk implementation logic
      */
     toOpenAIResponsesStreamChunk(openaiChunk, model, requestId = null) {
         if (!openaiChunk || !openaiChunk.choices || !openaiChunk.choices[0]) {
@@ -1038,7 +1069,7 @@ export class OpenAIConverter extends BaseConverter {
         const delta = choice.delta || {};
         const events = [];
 
-        // 第一个chunk - role为assistant时调用 getOpenAIResponsesStreamChunkBegin
+        // First chunk - call getOpenAIResponsesStreamChunkBegin when role is assistant
         if (delta.role === 'assistant') {
             events.push(
                 generateResponseCreated(responseId, model || openaiChunk.model || 'unknown'),
@@ -1048,7 +1079,7 @@ export class OpenAIConverter extends BaseConverter {
             );
         }
 
-        // 处理 reasoning_content（推理内容）
+        // Handle reasoning_content
         if (delta.reasoning_content) {
             events.push({
                 delta: delta.reasoning_content,
@@ -1059,12 +1090,12 @@ export class OpenAIConverter extends BaseConverter {
             });
         }
 
-        // 处理 tool_calls（工具调用）
+        // Handle tool_calls
         if (delta.tool_calls && delta.tool_calls.length > 0) {
             for (const toolCall of delta.tool_calls) {
                 const outputIndex = toolCall.index || 0;
 
-                // 如果有 function.name，说明是工具调用开始
+                // If function.name exists, it indicates tool call start
                 if (toolCall.function && toolCall.function.name) {
                     events.push({
                         item: {
@@ -1080,7 +1111,7 @@ export class OpenAIConverter extends BaseConverter {
                     });
                 }
 
-                // 如果有 function.arguments，说明是参数增量
+                // If function.arguments exists, it indicates argument delta
                 if (toolCall.function && toolCall.function.arguments) {
                     events.push({
                         delta: toolCall.function.arguments,
@@ -1093,7 +1124,7 @@ export class OpenAIConverter extends BaseConverter {
             }
         }
 
-        // 处理普通文本内容
+        // Handle normal text content
         if (delta.content) {
             events.push({
                 delta: delta.content,
@@ -1104,7 +1135,7 @@ export class OpenAIConverter extends BaseConverter {
             });
         }
 
-        // 处理完成状态 - 调用 getOpenAIResponsesStreamChunkEnd
+        // Handle completion status - call getOpenAIResponsesStreamChunkEnd
         if (choice.finish_reason) {
             events.push(
                 generateOutputTextDone(responseId),
@@ -1113,7 +1144,7 @@ export class OpenAIConverter extends BaseConverter {
                 generateResponseCompleted(responseId)
             );
 
-            // 如果有 usage 信息，更新最后一个事件
+            // If usage info exists, update the last event
             if (openaiChunk.usage && events.length > 0) {
                 const lastEvent = events[events.length - 1];
                 if (lastEvent.response) {

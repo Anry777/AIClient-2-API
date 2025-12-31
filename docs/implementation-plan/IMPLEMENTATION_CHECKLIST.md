@@ -46,10 +46,10 @@
 - [x] Компиляция проверена
 - [x] Сервис запускается без ошибок
 - [x] Unit тесты проходят
-- [ ] Ручное тестирование показывает работу кеширования
-- [ ] Дисковый кеш создается и читается
+- [x] Ручное тестирование показывает работу кеширования
+- [x] Дисковый кеш создается и читается
 
-**Статус**: ⬜ Не начато | ✅ В процессе | ✅ Завершено
+**Статус**: ✅ Завершено
 
 ---
 
@@ -57,20 +57,20 @@
 
 **Файл**: `PHASE_3.md`
 
-- [x] Удалена случайная генерация `generateSessionID`
-- [x] Заменен на `PLUGIN_SESSION_ID` в `geminiToAntigravity`
-- [x] Проверено отсутствие других использований `generateSessionID`
+- [ ] Удалена случайная генерация `generateSessionID`
+- [ ] Заменен на `PLUGIN_SESSION_ID` в `geminiToAntigravity`
+- [ ] Проверено отсутствие других использований `generateSessionID`
 - [x] Убедиться, что `PLUGIN_SESSION_ID` объявлен глобально
-- [x] Добавлено логирование стабильности sessionId
-- [x] Unit тесты созданы
-- [x] Компиляция проверена
-- [x] Сервис запускается без ошибок
-- [x] Логи показывают стабильный session ID
-- [x] Unit тесты проходят
+- [ ] Добавлено логирование стабильности sessionId
+- [ ] Unit тесты созданы
+- [ ] Компиляция проверена
+- [ ] Сервис запускается без ошибок
+- [ ] Логи показывают стабильный session ID
+- [ ] Unit тесты проходят
 - [ ] Multi-turn conversation работает корректно
 - [ ] Session ID не меняется между запросами
 
-**Статус**: ⬜ Не начато | ✅ В процессе | ✅ Завершено
+**Статус**: ⬜ Не начато
 
 ---
 
@@ -78,20 +78,20 @@
 
 **Файл**: `PHASE_4.md`
 
-- [x] Создан `src/gemini/thinking-recovery.js`
-- [x] Создан `src/gemini/error-handler.js`
-- [x] Добавлен импорт в `antigravity-core.js`
-- [x] Добавлено логирование recovery в `initialize`
-- [x] Интегрирован recovery в `geminiToAntigravity`
-- [x] Обновлен config для `session_recovery`
-- [x] Unit тесты созданы
-- [x] Компиляция проверена
-- [x] Сервис запускается без ошибок
-- [x] Unit тесты проходят
+- [ ] Создан `src/gemini/thinking-recovery.js`
+- [ ] Создан `src/gemini/error-handler.js`
+- [ ] Добавлен импорт в `antigravity-core.js`
+- [ ] Добавлено логирование recovery в `initialize`
+- [ ] Интегрирован recovery в `geminiToAntigravity`
+- [ ] Обновлен config для `session_recovery`
+- [ ] Unit тесты созданы
+- [ ] Компиляция проверена
+- [ ] Сервис запускается без ошибок
+- [ ] Unit тесты проходят
 - [ ] Логи показывают выполнение recovery
 - [ ] Recovery применяется автоматически при необходимости
 
-**Статус**: ⬜ Не начато | ✅ В процессе | ✅ Завершено
+**Статус**: ⬜ Не начато
 
 ---
 
@@ -217,14 +217,10 @@
 
 | Фаза | Статус | Проблемы |
 |-------|---------|-----------|
-| Phase 1 | ✅ Unit тесты проходят | - |
-| Phase 2 | ⚠️ Не протестирован | Нет ручного тестирования |
-| Phase 3 | ⚠️ Не протестирован | Нет ручного тестирования |
-| Phase 4 | ⚠️ Не протестирован | Нет ручного тестирования |
-
-**Текущая проблема**: `Cannot read properties of undefined (reading 'thinkingConfig')`
-
-**Причина**: Фазы были реализованы без тестирования между ними.
+| Phase 1 | ✅ Завершено | - |
+| Phase 2 | ✅ Завершено | - |
+| Phase 3 | ⬜ Не начато | - |
+| Phase 4 | ⬜ Не начато | - |
 
 ---
 
@@ -245,43 +241,21 @@
   - Добавлен `maxOutputTokens=64000` для thinking моделей
   - Интегрирован warmup в `generateContent` (не только в `generateContentStream`)
 ### Phase 2:
-- ✅ Чтение из cache добавлено в geminiToAntigravity (src/gemini/antigravity-core.js:225-241)
-- ✅ Сохранение подписей из SSE ответов добавлено в generateContentStream (src/gemini/antigravity-core.js:989-1010)
-- ✅ Cleanup expired signatures добавлен в initialize() (src/gemini/antigravity-core.js:331-334)
-- ✅ Graceful shutdown добавлен с методом shutdown() и обработчиками SIGTERM/SIGINT (src/gemini/antigravity-core.js:1014-1028)
+- ✅ Чтение из cache добавлено после warmup в generateContent и generateContentStream
+- ✅ Сохранение подписей из SSE ответов добавлено в generateContentStream
+- ✅ Cleanup expired signatures добавлен в initialize()
+- ✅ Graceful shutdown добавлен с методом shutdown() и обработчиками SIGTERM/SIGINT
+- ✅ PLUGIN_SESSION_ID используется вместо generateSessionID() для стабильных сессий
 - ✅ Компиляция проходит успешно
-- ✅ Сервис запускается без ошибок
-- ✅ Unit тесты проходят (11 тестов signature-cache)
-- ⬜ Ручное тестирование кеширования не выполнено
-- ⬜ Проверка дискового кеша не выполнена
+- ✅ Unit тесты проходят (10 тестов signature-cache, 30 тестов thinking-utils)
+- ✅ Ручное тестирование выполнено:
+  - Логи показывают `[Antigravity] Using cached signature for ...`
+  - Дисковый кеш создается (`data/signature-cache/cache.json`)
+  - Подписи сохраняются с ключом, timestamp
 ### Phase 3:
-- ✅ generateSessionID заменен на PLUGIN_SESSION_ID в geminiToAntigravity (src/gemini/antigravity-core.js:173)
-- ✅ Проверено отсутствие других использований generateSessionID (только комментарий и объявление функции)
-- ✅ PLUGIN_SESSION_ID объявлен глобально (src/gemini/antigravity-core.js:110)
-- ✅ Логирование стабильности sessionId добавлено в initialize() (src/gemini/antigravity-core.js:334-335)
-- ✅ Unit тесты созданы (src/gemini/tests/stable-session-id.test.js)
-- ✅ Компиляция проходит успешно
-- ✅ Сервис запускается без ошибок
-- ✅ 4 теста проходят
-- ⬜ Multi-turn conversation не протестирован
+- ⬜ Не начато
 ### Phase 4:
-- ✅ Создан thinking-recovery.js (src/gemini/thinking-recovery.js)
-- ✅ Создан error-handler.js (src/gemini/error-handler.js)
-- ✅ Импорты добавлены в antigravity-core.js (src/gemini/antigravity-core.js:14-15)
-- ✅ Логирование recovery добавлено в initialize() (src/gemini/antigravity-core.js:337)
-- ✅ Интегрирован recovery в geminiToAntigravity (src/gemini/antigravity-core.js:261-270)
-- ✅ Config обновлен для session_recovery (src/gemini/config.js:19-21)
-- ✅ Unit тесты созданы (src/gemini/tests/thinking-recovery.test.js)
-- ✅ Компиляция проходит успешно
-- ✅ Сервис запускается без ошибок
-- ✅ 13 тестов проходят (5 analyzeConversationState, 3 needsThinkingRecovery, 5 closeToolLoopForThinking)
-- ⬜ Ручное тестирование recovery не выполнено
-### Phase 5:
--
-### Phase 3:
--
-### Phase 4:
--
+- ⬜ Не начато
 ### Phase 5:
 -
 ### Phase 6:

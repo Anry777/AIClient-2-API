@@ -1,6 +1,6 @@
 /**
- * Gemini转换器
- * 处理Gemini（Google）协议与其他协议之间的转换
+ * Gemini Converter
+ * Handles conversion between Gemini (Google) protocol and other protocols
  */
 
 import { v4 as uuidv4 } from 'uuid';
@@ -27,8 +27,8 @@ import {
 } from '../../openai/openai-responses-core.mjs';
 
 /**
- * Gemini转换器类
- * 实现Gemini协议到其他协议的转换
+ * Gemini Converter Class
+ * Implements conversion from Gemini protocol to other protocols
  */
 export class GeminiConverter extends BaseConverter {
     constructor() {
@@ -36,7 +36,7 @@ export class GeminiConverter extends BaseConverter {
     }
 
     /**
-     * 转换请求
+     * Convert Request
      */
     convertRequest(data, targetProtocol) {
         switch (targetProtocol) {
@@ -52,7 +52,7 @@ export class GeminiConverter extends BaseConverter {
     }
 
     /**
-     * 转换响应
+     * Convert Response
      */
     convertResponse(data, targetProtocol, model) {
         switch (targetProtocol) {
@@ -68,23 +68,23 @@ export class GeminiConverter extends BaseConverter {
     }
 
     /**
-     * 转换流式响应块
+     * Convert Stream Chunk
      */
-    convertStreamChunk(chunk, targetProtocol, model) {
+    convertStreamChunk(chunk, targetProtocol, model, requestId) {
         switch (targetProtocol) {
             case MODEL_PROTOCOL_PREFIX.OPENAI:
-                return this.toOpenAIStreamChunk(chunk, model);
+                return this.toOpenAIStreamChunk(chunk, model, requestId);
             case MODEL_PROTOCOL_PREFIX.CLAUDE:
-                return this.toClaudeStreamChunk(chunk, model);
+                return this.toClaudeStreamChunk(chunk, model, requestId);
             case MODEL_PROTOCOL_PREFIX.OPENAI_RESPONSES:
-                return this.toOpenAIResponsesStreamChunk(chunk, model);
+                return this.toOpenAIResponsesStreamChunk(chunk, model, requestId);
             default:
                 throw new Error(`Unsupported target protocol: ${targetProtocol}`);
         }
     }
 
     /**
-     * 转换模型列表
+     * Convert Model List
      */
     convertModelList(data, targetProtocol) {
         switch (targetProtocol) {
@@ -98,11 +98,11 @@ export class GeminiConverter extends BaseConverter {
     }
 
     // =========================================================================
-    // Gemini -> OpenAI 转换
+    // Gemini -> OpenAI Conversion
     // =========================================================================
 
     /**
-     * Gemini请求 -> OpenAI请求
+     * Gemini Request -> OpenAI Request
      */
     toOpenAIRequest(geminiRequest) {
         const openaiRequest = {
@@ -113,7 +113,7 @@ export class GeminiConverter extends BaseConverter {
             top_p: checkAndAssignOrDefault(geminiRequest.top_p, OPENAI_DEFAULT_TOP_P),
         };
 
-        // 处理系统指令
+        // Handle System Instructions
         if (geminiRequest.systemInstruction && Array.isArray(geminiRequest.systemInstruction.parts)) {
             const systemContent = this.processGeminiPartsToOpenAIContent(geminiRequest.systemInstruction.parts);
             if (systemContent) {
@@ -124,7 +124,7 @@ export class GeminiConverter extends BaseConverter {
             }
         }
 
-        // 处理内容
+        // Handle Contents
         if (geminiRequest.contents && Array.isArray(geminiRequest.contents)) {
             geminiRequest.contents.forEach(content => {
                 if (content && Array.isArray(content.parts)) {
@@ -144,11 +144,11 @@ export class GeminiConverter extends BaseConverter {
     }
 
     /**
-     * Gemini响应 -> OpenAI响应
+     * Gemini Response -> OpenAI Response
      */
     toOpenAIResponse(geminiResponse, model) {
         const content = this.processGeminiResponseContent(geminiResponse);
-        
+
         return {
             id: `chatcmpl-${uuidv4()}`,
             object: "chat.completion",
@@ -189,7 +189,7 @@ export class GeminiConverter extends BaseConverter {
     }
 
     /**
-     * Gemini流式响应 -> OpenAI流式响应
+     * Gemini Stream Response -> OpenAI Stream Response
      */
     toOpenAIStreamChunk(geminiChunk, model) {
         if (!geminiChunk) return null;
@@ -199,22 +199,29 @@ export class GeminiConverter extends BaseConverter {
 
         let content = '';
         const toolCalls = [];
-        
-        // 从parts中提取文本和tool calls
+
+        // Extract text and tool calls from parts
         const parts = candidate.content?.parts;
+        let reasoningContent = '';
         if (parts && Array.isArray(parts)) {
             for (const part of parts) {
-                if (part.text) {
+                if (part.thought) {
+                    if (part.text) {
+                        reasoningContent += part.text;
+                    }
+                } else if (part.text) {
                     content += part.text;
                 }
+
                 if (part.functionCall) {
                     toolCalls.push({
+                        index: toolCalls.length,
                         id: part.functionCall.id || `call_${uuidv4()}`,
                         type: 'function',
                         function: {
                             name: part.functionCall.name,
-                            arguments: typeof part.functionCall.args === 'string' 
-                                ? part.functionCall.args 
+                            arguments: typeof part.functionCall.args === 'string'
+                                ? part.functionCall.args
                                 : JSON.stringify(part.functionCall.args)
                         }
                     });
@@ -223,25 +230,34 @@ export class GeminiConverter extends BaseConverter {
             }
         }
 
-        // 处理finishReason
+        // Handle finishReason
         let finishReason = null;
         if (candidate.finishReason) {
             finishReason = candidate.finishReason === 'STOP' ? 'stop' :
-                         candidate.finishReason === 'MAX_TOKENS' ? 'length' :
-                         candidate.finishReason.toLowerCase();
+                candidate.finishReason === 'MAX_TOKENS' ? 'length' :
+                    candidate.finishReason.toLowerCase();
         }
 
-        // 构建delta对象
+        // If we have tool calls, OpenAI expects finish_reason to be "tool_calls"
+        // Force it if we have tool calls, as Gemini sends them as complete objects in parts
+        if (toolCalls.length > 0) {
+            finishReason = 'tool_calls';
+        }
+
+        // Build delta object
         const delta = {};
         if (content) delta.content = content;
-        if (toolCalls.length > 0) delta.tool_calls = toolCalls;
+        if (reasoningContent) delta.reasoning_content = reasoningContent;
+        if (toolCalls.length > 0) {
+            delta.tool_calls = toolCalls;
+        }
 
         // Don't return empty delta chunks
         if (Object.keys(delta).length === 0 && !finishReason) {
             return null;
         }
 
-        return {
+        const chunk = {
             id: `chatcmpl-${uuidv4()}`,
             object: "chat.completion.chunk",
             created: Math.floor(Date.now() / 1000),
@@ -273,12 +289,14 @@ export class GeminiConverter extends BaseConverter {
                 completion_tokens_details: {
                     reasoning_tokens: 0
                 }
-            },
+            }
         };
+
+        return chunk;
     }
 
     /**
-     * Gemini模型列表 -> OpenAI模型列表
+     * Gemini Model List -> OpenAI Model List
      */
     toOpenAIModelList(geminiModels) {
         return {
@@ -293,23 +311,23 @@ export class GeminiConverter extends BaseConverter {
     }
 
     /**
-     * 处理Gemini parts到OpenAI内容
+     * Process Gemini parts to OpenAI content
      */
     processGeminiPartsToOpenAIContent(parts) {
         if (!parts || !Array.isArray(parts)) return '';
-        
+
         const contentArray = [];
-        
+
         parts.forEach(part => {
             if (!part) return;
-            
+
             if (typeof part.text === 'string') {
                 contentArray.push({
                     type: 'text',
                     text: part.text
                 });
             }
-            
+
             if (part.inlineData) {
                 const { mimeType, data } = part.inlineData;
                 if (mimeType && data) {
@@ -321,7 +339,7 @@ export class GeminiConverter extends BaseConverter {
                     });
                 }
             }
-            
+
             if (part.fileData) {
                 const { mimeType, fileUri } = part.fileData;
                 if (mimeType && fileUri) {
@@ -341,43 +359,43 @@ export class GeminiConverter extends BaseConverter {
                 }
             }
         });
-        
+
         return contentArray.length === 1 && contentArray[0].type === 'text'
             ? contentArray[0].text
             : contentArray;
     }
 
     /**
-     * 处理Gemini响应内容
+     * Process Gemini response content
      */
     processGeminiResponseContent(geminiResponse) {
         if (!geminiResponse || !geminiResponse.candidates) return '';
-        
+
         const contents = [];
-        
+
         geminiResponse.candidates.forEach(candidate => {
             if (candidate.content && candidate.content.parts) {
                 candidate.content.parts.forEach(part => {
                     if (part.text) {
                         contents.push(part.text);
                     }
-                    // 处理 Gemini 2.0+ 的 thought/thinking 字段
+                    // Handle Gemini 2.0+ thought/thinking fields
                     if (part.thought) {
                         contents.push(`<thinking>\n${part.thought}\n</thinking>`);
                     }
                 });
             }
         });
-        
+
         return contents.join('\n');
     }
 
     // =========================================================================
-    // Gemini -> Claude 转换
+    // Gemini -> Claude Conversion
     // =========================================================================
 
     /**
-     * Gemini请求 -> Claude请求
+     * Gemini Request -> Claude Request
      */
     toClaudeRequest(geminiRequest) {
         const claudeRequest = {
@@ -388,7 +406,7 @@ export class GeminiConverter extends BaseConverter {
             top_p: checkAndAssignOrDefault(geminiRequest.generationConfig?.topP, CLAUDE_DEFAULT_TOP_P),
         };
 
-        // 处理系统指令
+        // Handle System Instructions
         if (geminiRequest.systemInstruction && geminiRequest.systemInstruction.parts) {
             const systemText = geminiRequest.systemInstruction.parts
                 .filter(p => p.text)
@@ -399,7 +417,7 @@ export class GeminiConverter extends BaseConverter {
             }
         }
 
-        // 处理内容
+        // Handle Contents
         if (geminiRequest.contents && Array.isArray(geminiRequest.contents)) {
             geminiRequest.contents.forEach(content => {
                 if (!content || !content.parts) return;
@@ -416,7 +434,7 @@ export class GeminiConverter extends BaseConverter {
             });
         }
 
-        // 处理工具
+        // Handle Tools
         if (geminiRequest.tools && geminiRequest.tools[0]?.functionDeclarations) {
             claudeRequest.tools = geminiRequest.tools[0].functionDeclarations.map(func => ({
                 name: func.name,
@@ -429,7 +447,7 @@ export class GeminiConverter extends BaseConverter {
     }
 
     /**
-     * Gemini响应 -> Claude响应
+     * Gemini Response -> Claude Response
      */
     toClaudeResponse(geminiResponse, model) {
         if (!geminiResponse || !geminiResponse.candidates || geminiResponse.candidates.length === 0) {
@@ -493,19 +511,19 @@ export class GeminiConverter extends BaseConverter {
     }
 
     /**
-     * Gemini流式响应 -> Claude流式响应
+     * Gemini Stream Response -> Claude Stream Response
      */
     toClaudeStreamChunk(geminiChunk, model) {
         if (!geminiChunk) return null;
 
-        // 处理完整的Gemini chunk对象
+        // Handle full Gemini chunk object
         if (typeof geminiChunk === 'object' && !Array.isArray(geminiChunk)) {
             const candidate = geminiChunk.candidates?.[0];
-            
+
             if (candidate) {
                 const parts = candidate.content?.parts;
-                
-                // 提取文本内容
+
+                // Extract text content
                 if (parts && Array.isArray(parts)) {
                     const textParts = parts.filter(part => part && typeof part.text === 'string');
                     if (textParts.length > 0) {
@@ -520,19 +538,19 @@ export class GeminiConverter extends BaseConverter {
                         };
                     }
                 }
-                
-                // 处理finishReason
+
+                // Handle finishReason
                 if (candidate.finishReason) {
                     const result = {
                         type: "message_delta",
                         delta: {
                             stop_reason: candidate.finishReason === 'STOP' ? 'end_turn' :
-                                       candidate.finishReason === 'MAX_TOKENS' ? 'max_tokens' :
-                                       candidate.finishReason.toLowerCase()
+                                candidate.finishReason === 'MAX_TOKENS' ? 'max_tokens' :
+                                    candidate.finishReason.toLowerCase()
                         }
                     };
-                    
-                    // 添加 usage 信息
+
+                    // Add usage info
                     if (geminiChunk.usageMetadata) {
                         result.usage = {
                             input_tokens: geminiChunk.usageMetadata.promptTokenCount || 0,
@@ -545,13 +563,13 @@ export class GeminiConverter extends BaseConverter {
                             cached_tokens: geminiChunk.usageMetadata.cachedContentTokenCount || 0
                         };
                     }
-                    
+
                     return result;
                 }
             }
         }
 
-        // 向后兼容：处理字符串格式
+        // Backward compatibility: Handle string format
         if (typeof geminiChunk === 'string') {
             return {
                 type: "content_block_delta",
@@ -567,7 +585,7 @@ export class GeminiConverter extends BaseConverter {
     }
 
     /**
-     * Gemini模型列表 -> Claude模型列表
+     * Gemini Model List -> Claude Model List
      */
     toClaudeModelList(geminiModels) {
         return {
@@ -579,7 +597,7 @@ export class GeminiConverter extends BaseConverter {
     }
 
     /**
-     * 处理Gemini parts到Claude内容
+     * Process Gemini parts to Claude content
      */
     processGeminiPartsToClaudeContent(parts) {
         if (!parts || !Array.isArray(parts)) return [];
@@ -629,7 +647,7 @@ export class GeminiConverter extends BaseConverter {
     }
 
     /**
-     * 处理Gemini响应到Claude内容
+     * Process Gemini response to Claude content
      */
     processGeminiResponseToClaudeContent(geminiResponse) {
         if (!geminiResponse || !geminiResponse.candidates || geminiResponse.candidates.length === 0) return [];
@@ -679,11 +697,11 @@ export class GeminiConverter extends BaseConverter {
     }
 
     // =========================================================================
-    // Gemini -> OpenAI Responses 转换
+    // Gemini -> OpenAI Responses Conversion
     // =========================================================================
 
     /**
-     * Gemini请求 -> OpenAI Responses请求
+     * Gemini Request -> OpenAI Responses Request
      */
     toOpenAIResponsesRequest(geminiRequest) {
         const responsesRequest = {
@@ -693,7 +711,7 @@ export class GeminiConverter extends BaseConverter {
             top_p: checkAndAssignOrDefault(geminiRequest.generationConfig?.topP, OPENAI_DEFAULT_TOP_P),
         };
 
-        // 处理系统指令
+        // Handle System Instructions
         if (geminiRequest.systemInstruction && geminiRequest.systemInstruction.parts) {
             const instructionsText = geminiRequest.systemInstruction.parts
                 .filter(p => p.text)
@@ -704,7 +722,7 @@ export class GeminiConverter extends BaseConverter {
             }
         }
 
-        // 处理输入
+        // Handle Input
         if (geminiRequest.contents && Array.isArray(geminiRequest.contents)) {
             const lastContent = geminiRequest.contents[geminiRequest.contents.length - 1];
             if (lastContent && lastContent.parts) {
@@ -722,7 +740,7 @@ export class GeminiConverter extends BaseConverter {
     }
 
     /**
-     * Gemini响应 -> OpenAI Responses响应
+     * Gemini Response -> OpenAI Responses Response
      */
     toOpenAIResponsesResponse(geminiResponse, model) {
         const content = this.processGeminiResponseContent(geminiResponse);
@@ -788,7 +806,7 @@ export class GeminiConverter extends BaseConverter {
     }
 
     /**
-     * Gemini流式响应 -> OpenAI Responses流式响应
+     * Gemini Stream Response -> OpenAI Responses Stream Response
      */
     toOpenAIResponsesStreamChunk(geminiChunk, model, requestId = null) {
         if (!geminiChunk) return [];
@@ -796,16 +814,16 @@ export class GeminiConverter extends BaseConverter {
         const responseId = requestId || `resp_${uuidv4().replace(/-/g, '')}`;
         const events = [];
 
-        // 处理完整的Gemini chunk对象
+        // Handle full Gemini chunk object
         if (typeof geminiChunk === 'object' && !Array.isArray(geminiChunk)) {
             const candidate = geminiChunk.candidates?.[0];
-            
+
             if (candidate) {
                 const parts = candidate.content?.parts;
-                
-                // 第一个chunk - 检测是否是开始（有role）
+
+                // First chunk - detect if it's start (has role)
                 if (candidate.content?.role === 'model' && parts && parts.length > 0) {
-                    // 只在第一次有内容时发送开始事件
+                    // Only send start event on first content
                     const hasContent = parts.some(part => part && typeof part.text === 'string' && part.text.length > 0);
                     if (hasContent) {
                         events.push(
@@ -816,8 +834,8 @@ export class GeminiConverter extends BaseConverter {
                         );
                     }
                 }
-                
-                // 提取文本内容
+
+                // Extract text content
                 if (parts && Array.isArray(parts)) {
                     const textParts = parts.filter(part => part && typeof part.text === 'string');
                     if (textParts.length > 0) {
@@ -831,8 +849,8 @@ export class GeminiConverter extends BaseConverter {
                         });
                     }
                 }
-                
-                // 处理finishReason
+
+                // Handle finishReason
                 if (candidate.finishReason) {
                     events.push(
                         generateOutputTextDone(responseId),
@@ -840,8 +858,8 @@ export class GeminiConverter extends BaseConverter {
                         generateOutputItemDone(responseId),
                         generateResponseCompleted(responseId)
                     );
-                    
-                    // 如果有 usage 信息，更新最后一个事件
+
+                    // If usage info exists, update the last event
                     if (geminiChunk.usageMetadata && events.length > 0) {
                         const lastEvent = events[events.length - 1];
                         if (lastEvent.response) {
@@ -862,7 +880,7 @@ export class GeminiConverter extends BaseConverter {
             }
         }
 
-        // 向后兼容：处理字符串格式
+        // Backward compatibility: Handle string format
         if (typeof geminiChunk === 'string') {
             events.push({
                 delta: geminiChunk,
