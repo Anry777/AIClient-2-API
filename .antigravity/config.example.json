@@ -1,0 +1,28 @@
+{
+  "quiet_mode": false,
+  "debug": false,
+  "log_dir": null,
+
+  "enable_thinking_warmup": true,
+  "thinking_warmup_budget": 16000,
+
+  "enable_signature_cache": true,
+  "signature_cache_memory_ttl_seconds": 3600,
+  "signature_cache_disk_ttl_seconds": 172800,
+  "signature_cache_write_interval_seconds": 60,
+
+  "use_stable_session_id": true,
+
+  "session_recovery": true,
+  "auto_resume": true,
+  "resume_text": "continue",
+
+  "tool_id_recovery": true,
+
+  "claude_tool_hardening": true,
+
+  "empty_response_max_attempts": 4,
+  "empty_response_retry_delay_ms": 2000,
+
+  "recoverable_error_max_retries": 3
+}

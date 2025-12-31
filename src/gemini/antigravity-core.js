@@ -12,6 +12,7 @@ import { getProviderModels } from '../provider-models.js';
 import { SignatureCache } from './signature-cache.js';
 import * as ThinkingUtils from './thinking-utils.js';
 import * as ThinkingConfig from './config.js';
+import { getDefaultConfig } from './config.js';
 import * as ThinkingRecovery from './thinking-recovery.js';
 import * as ErrorHandler from './error-handler.js';
 import * as ToolRecovery from './tool-recovery.js';
@@ -355,6 +356,8 @@ export class AntigravityApiService {
             emptyResponse: 0,
             rateLimit: 0,
         };
+
+        this.thinkingConfig = getDefaultConfig();
     }
 
     async initialize() {
@@ -366,12 +369,18 @@ export class AntigravityApiService {
             ANTIGRAVITY_BASE_URL_AUTOPUSH
         ];
 
-        // NEW: Initialize signature cache
+        this.thinkingConfig = await ThinkingConfig.getConfig();
+
+        const validation = ThinkingConfig.validateConfig(this.thinkingConfig);
+        if (!validation.valid) {
+            console.warn('[Antigravity] Configuration has validation errors, using defaults for invalid values');
+        }
+
         this.signatureCache = new SignatureCache({
             memory_ttl_seconds: this.thinkingConfig.signature_cache_memory_ttl_seconds,
-            disk_ttl_seconds: this.thinkingConfig.signature_cache_disk_ttl_seconds,
+            localStorage_ttl_seconds: this.thinkingConfig.signature_cache_disk_ttl_seconds,
             write_interval_seconds: this.thinkingConfig.signature_cache_write_interval_seconds,
-            debug_thinking: this.thinkingConfig.debug_thinking,
+            debug_thinking: this.thinkingConfig.debug,
         });
         console.log(`[Antigravity] Using stable session ID: ${PLUGIN_SESSION_ID}`);
         console.log(`[Antigravity] Session ID will remain constant across all requests in this process`);
@@ -400,7 +409,7 @@ export class AntigravityApiService {
     }
 
     get thinkingConfig() {
-        return ThinkingConfig.getConfig();
+        return this._thinkingConfig || this.thinkingConfig;
     }
 
     async initializeAuth(forceRefresh = false) {

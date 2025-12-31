@@ -141,19 +141,19 @@
 
 **Файл**: `PHASE_7.md`
 
-- [ ] Создан `src/gemini/config-loader.js`
-- [ ] Обновлен `src/gemini/config.js`
-- [ ] Обновлен `src/gemini/antigravity-core.js` для async getConfig
-- [ ] Создан пример config файла
-- [ ] Unit тесты созданы
-- [ ] Компиляция проверена
-- [ ] Сервис запускается без ошибок
-- [ ] Unit тесты проходят
-- [ ] Config загружается из файла
-- [ ] Config загружается из env переменных
-- [ ] Validation работает корректно
+- [x] Создан `src/gemini/config-loader.js`
+- [x] Обновлен `src/gemini/config.js`
+- [x] Обновлен `src/gemini/antigravity-core.js` для async getConfig
+- [x] Создан пример config файла
+- [x] Unit тесты созданы
+- [x] Компиляция проверена
+- [x] Сервис запускается без ошибок
+- [x] Unit тесты проходят
+- [x] Config загружается из файла
+- [x] Config загружается из env переменных
+- [x] Validation работает корректно
 
-**Статус**: ⬜ Не начато | ✅ В процессе | ✅ Завершено
+**Статус**: ✅ Завершено
 
 ---
 
@@ -223,6 +223,7 @@
 | Phase 4 | ✅ Завершено | - |
 | Phase 5 | ✅ Завершено | - |
 | Phase 6 | ✅ Завершено | - |
+| Phase 7 | ✅ Завершено | - |
 
 ---
 
@@ -306,7 +307,22 @@
 - ✅ Фикс: Добавлена инициализация `this.baseURLs` в метод `initialize()` для поддержки повторной инициализации
 - ✅ Фикс: Восстановлен метод `initialize()` как async, так как конструктор не может быть async
 ### Phase 7:
--
+- ✅ Создан config-loader.js с полной поддержкой загрузки конфигурации
+- ✅ Обновлен config.js для async загрузки конфигурации
+- ✅ Обновлен antigravity-core.js для использования async getConfig с валидацией
+- ✅ Создан пример config файла .antigravity/config.example.json
+- ✅ Созданы unit тесты config-loader.test.js (13 тестов)
+- ✅ Компиляция проверена успешно
+- ✅ Все 132 unit теста проходят
+- ✅ Config загружается из файла (.antigravity/config.json)
+- ✅ Config загружается из env переменных с правильным приоритетом
+- ✅ Validation работает корректно (проверяются TTL, retry attempts и т.д.)
+- ✅ Ручное тестирование в Docker завершено успешно:
+  - Thinking модель (claude-opus-4-5-thinking) отвечает корректно
+  - Streaming работает с reasoning_content
+  - Multi-turn conversation работает (модель помнит контекст)
+  - Конфигурация загружается корректно
+
 ### Phase 8:
 -
 
