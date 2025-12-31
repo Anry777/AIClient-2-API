@@ -12,6 +12,8 @@ import { getProviderModels } from '../provider-models.js';
 import { SignatureCache } from './signature-cache.js';
 import * as ThinkingUtils from './thinking-utils.js';
 import * as ThinkingConfig from './config.js';
+import * as ThinkingRecovery from './thinking-recovery.js';
+import * as ErrorHandler from './error-handler.js';
 
 // Configure HTTP/HTTPS agent to limit connection pool size and avoid resource leaks
 const httpAgent = new http.Agent({
@@ -372,6 +374,9 @@ export class AntigravityApiService {
             this.signatureCache.cleanupExpired();
             console.log('[Antigravity] Signature cache cleanup completed');
         }
+
+        // Phase 4: Thinking recovery status
+        console.log('[Antigravity] Thinking recovery: ' + (this.thinkingConfig.session_recovery ? 'ENABLED' : 'DISABLED'));
 
         await this.initializeAuth();
 
@@ -934,10 +939,21 @@ export class AntigravityApiService {
         const actualModelName = alias2ModelName(selectedModel);
 
         // Convert processed request body to Antigravity format
-        const payload = geminiToAntigravity(actualModelName, { request: processedRequestBody }, this.projectId);
+        let payload = geminiToAntigravity(actualModelName, { request: processedRequestBody }, this.projectId);
 
         // Set model name to actual model name
         payload.model = actualModelName;
+
+        // Phase 4: Apply thinking recovery if enabled
+        if (this.thinkingConfig.session_recovery && payload.request?.contents) {
+            const state = ThinkingRecovery.analyzeConversationState(payload.request.contents);
+
+            if (ThinkingRecovery.needsThinkingRecovery(state)) {
+                console.log('[Antigravity] Detected thinking recovery needed, applying fix...');
+                payload.request.contents = ThinkingRecovery.closeToolLoopForThinking(payload.request.contents);
+                console.log('[Antigravity] Applied thinking recovery, conversation restored');
+            }
+        }
 
         // NEW: Thinking Warmup
         if (this.thinkingConfig.enable_thinking_warmup) {
@@ -997,10 +1013,21 @@ export class AntigravityApiService {
         const actualModelName = alias2ModelName(selectedModel);
 
         // Convert processed request body to Antigravity format
-        const payload = geminiToAntigravity(actualModelName, { request: processedRequestBody }, this.projectId);
+        let payload = geminiToAntigravity(actualModelName, { request: processedRequestBody }, this.projectId);
 
         // Set model name to actual model name
         payload.model = actualModelName;
+
+        // Phase 4: Apply thinking recovery if enabled
+        if (this.thinkingConfig.session_recovery && payload.request?.contents) {
+            const state = ThinkingRecovery.analyzeConversationState(payload.request.contents);
+
+            if (ThinkingRecovery.needsThinkingRecovery(state)) {
+                console.log('[Antigravity] Detected thinking recovery needed, applying fix...');
+                payload.request.contents = ThinkingRecovery.closeToolLoopForThinking(payload.request.contents);
+                console.log('[Antigravity] Applied thinking recovery, conversation restored');
+            }
+        }
 
         // NEW: Thinking Warmup
         if (this.thinkingConfig.enable_thinking_warmup) {

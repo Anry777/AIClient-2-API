@@ -78,20 +78,20 @@
 
 **Файл**: `PHASE_4.md`
 
-- [ ] Создан `src/gemini/thinking-recovery.js`
-- [ ] Создан `src/gemini/error-handler.js`
-- [ ] Добавлен импорт в `antigravity-core.js`
-- [ ] Добавлено логирование recovery в `initialize`
-- [ ] Интегрирован recovery в `geminiToAntigravity`
-- [ ] Обновлен config для `session_recovery`
-- [ ] Unit тесты созданы
-- [ ] Компиляция проверена
-- [ ] Сервис запускается без ошибок
-- [ ] Unit тесты проходят
-- [ ] Логи показывают выполнение recovery
-- [ ] Recovery применяется автоматически при необходимости
+- [x] Создан `src/gemini/thinking-recovery.js`
+- [x] Создан `src/gemini/error-handler.js`
+- [x] Добавлен импорт в `antigravity-core.js`
+- [x] Добавлено логирование recovery в `initialize`
+- [x] Интегрирован recovery в `geminiToAntigravity`
+- [x] Обновлен config для `session_recovery`
+- [x] Unit тесты созданы
+- [x] Компиляция проверена
+- [x] Сервис запускается без ошибок
+- [x] Unit тесты проходят
+- [x] Логи показывают выполнение recovery
+- [x] Recovery применяется автоматически при необходимости
 
-**Статус**: ⬜ Не начато
+**Статус**: ✅ Завершено
 
 ---
 
@@ -220,7 +220,7 @@
 | Phase 1 | ✅ Завершено | - |
 | Phase 2 | ✅ Завершено | - |
 | Phase 3 | ✅ Завершено | - |
-| Phase 4 | ⬜ Не начато | - |
+| Phase 4 | ✅ Завершено | - |
 
 ---
 
@@ -265,7 +265,19 @@
   - Два запроса отправлены ("Say hello", "Say goodbye")
   - Оба запроса успешны с одним session ID `-b3e81a88-939b-4404-95e6-4b11804daeb8`
 ### Phase 4:
-- ⬜ Не начато
+- ✅ Созданы `thinking-recovery.js` и `error-handler.js`
+- ✅ Добавлены импорты в `antigravity-core.js`
+- ✅ Логирование `[Antigravity] Thinking recovery: ENABLED` добавлено
+- ✅ Recovery интегрирован в `geminiToAntigravity`
+- ✅ `session_recovery: true` в config.js
+- ✅ Unit тесты созданы (26 тестов thinking-recovery)
+- ✅ Компиляция проходит успешно
+- ✅ Сервис запускается в Docker без ошибок
+- ✅ Все 77 unit тестов проходят (26 thinking-recovery + 11 stable-session-id + 10 signature-cache + 30 thinking-utils)
+- ✅ Логи показывают `[Antigravity] Detected thinking recovery needed, applying fix...`
+- ✅ Recovery применяется автоматически в Docker
+- ✅ Модель claude-opus-4-5-thinking протестирована
+- ✅ Модель gemini-2.0-flash-thinking-exp протестирована
 ### Phase 5:
 -
 ### Phase 6:

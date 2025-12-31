@@ -18,6 +18,11 @@ export const DEFAULT_CONFIG = {
 
     // Logging
     debug_thinking: false,
+
+    // Session Recovery (Phase 4)
+    session_recovery: true,
+    auto_resume: true,
+    resume_text: "continue",
 };
 
 /**

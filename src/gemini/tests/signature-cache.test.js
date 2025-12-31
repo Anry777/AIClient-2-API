@@ -14,7 +14,13 @@ describe('SignatureCache', () => {
             disk_ttl_seconds: 172800,
             write_interval_seconds: 60,
             debug_thinking: false,
+            disable_auto_load: true,
         });
+    });
+
+    afterEach(async () => {
+        cache.cleanup();
+        await new Promise(resolve => setTimeout(resolve, 50));
     });
 
     describe('buildKey', () => {
@@ -63,7 +69,7 @@ describe('SignatureCache', () => {
     });
 
     describe('clear', () => {
-        it('should clear all cache entries', () => {
+        it('should clear all cache entries', async () => {
             cache.cache('s1', 'm1', 'c1', 't1', 'sig1');
             cache.cache('s2', 'm2', 'c2', 't2', 'sig2');
 
@@ -71,6 +77,7 @@ describe('SignatureCache', () => {
 
             expect(cache.get('s1', 'm1', 'c1', 't1')).toBeNull();
             expect(cache.get('s2', 'm2', 'c2', 't2')).toBeNull();
+            await new Promise(resolve => setTimeout(resolve, 100));
         });
     });
 
@@ -83,15 +90,20 @@ describe('SignatureCache', () => {
                 timestamp: Date.now() - (3601 * 1000) // expired
             });
 
+            const flushToDiskSpy = jest.spyOn(cache, 'flushToDisk');
             cache.cleanupExpired();
 
             expect(cache.memoryCache.has(key)).toBe(false);
+            flushToDiskSpy.mockRestore();
         });
 
-        it('should keep valid entries', () => {
+        it('should keep valid entries', async () => {
             cache.cache('s1', 'm1', 'c1', 't1', 'sig1');
+            const flushToDiskSpy = jest.spyOn(cache, 'flushToDisk');
             cache.cleanupExpired();
             expect(cache.get('s1', 'm1', 'c1', 't1')).toBe('sig1');
+            flushToDiskSpy.mockRestore();
+            await new Promise(resolve => setTimeout(resolve, 100));
         });
     });
 });

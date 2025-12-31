@@ -16,10 +16,12 @@ export class SignatureCache {
         this.config = config || {};
         this.writeTimer = null;
 
-        // Load from disk on startup
-        this.loadFromDisk().catch(err => {
-            console.log('[SignatureCache] No existing cache file');
-        });
+        // Load from disk on startup (unless disabled)
+        if (!this.config.disable_auto_load) {
+            this.loadFromDisk().catch(err => {
+                console.log('[SignatureCache] No existing cache file');
+            });
+        }
     }
 
     /**
@@ -169,6 +171,16 @@ export class SignatureCache {
         if (cleaned > 0) {
             console.log(`[SignatureCache] Cleaned up ${cleaned} expired entries`);
             this.flushToDisk();
+        }
+    }
+
+    /**
+     * Cleanup - cancel pending writes
+     */
+    cleanup() {
+        if (this.writeTimer) {
+            clearTimeout(this.writeTimer);
+            this.writeTimer = null;
         }
     }
 }
