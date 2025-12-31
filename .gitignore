@@ -1,5 +1,5 @@
 node_modules
-.serena/
+.serenacache/
 .claude/
 CLAUDE.md
 config.json
@@ -9,3 +9,6 @@ input_system_prompt.txt
 data/
 logs/
 token-store.json
+coverage/
+*.test.js.html
+nul
