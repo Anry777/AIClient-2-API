@@ -24,56 +24,7 @@
 9. [PHASE_6.md](./PHASE_6.md) - Enhanced Error Handling (1-2 часа)
 10. [PHASE_7.md](./PHASE_7.md) - Configuration Schema (1 час)
 11. [PHASE_8.md](./PHASE_8.md) - Testing & Validation (3-4 часа)
-
----
-
-## Порядок выполнения
-
-1. Прочитайте `QUICKSTART.md`
-2. Откройте `PHASE_1.md`
-3. Выполните все задачи из Phase 1
-4. Протестируйте Phase 1
-5. Переходите к следующей фазе (Phase 2)
-6. Повторяйте для всех фаз 1-8
-
----
-
-## Структура после реализации
-
-```
-E:\1C\AIClient-2-API\
-├── docs\
-│   └── implementation-plan\
-│       ├── README.md (этот файл)
-│       ├── IMPLEMENTATION_PLAN.md
-│       ├── QUICKSTART.md
-│       ├── IMPLEMENTATION_CHECKLIST.md
-│       ├── PHASE_1.md
-│       ├── PHASE_2.md
-│       ├── PHASE_3.md
-│       ├── PHASE_4.md
-│       ├── PHASE_5.md
-│       ├── PHASE_6.md
-│       ├── PHASE_7.md
-│       └── PHASE_8.md
-└── src\gemini\
-    ├── antigravity-core.js (модифицирован)
-    ├── config.js (новый)
-    ├── config-loader.js (новый)
-    ├── thinking-utils.js (новый)
-    ├── signature-cache.js (новый)
-    ├── thinking-recovery.js (новый)
-    ├── tool-recovery.js (новый)
-    ├── error-handler.js (новый)
-    └── tests\
-        ├── signature-cache.test.js
-        ├── thinking-recovery.test.js
-        ├── tool-recovery.test.js
-        ├── error-handler.test.js
-        ├── stable-session-id.test.js
-        ├── config-loader.test.js
-        └── integration.test.js
-```
+12. [PHASE_9.md](./PHASE_9.md) - Gemini-Antigravity Claude Messages Support (2-3 часа)
 
 ---
 
@@ -89,13 +40,14 @@ E:\1C\AIClient-2-API\
 | Phase 6 | 1-2 часа |
 | Phase 7 | 1 час |
 | Phase 8 | 3-4 часа |
-| **Итого** | **13-19 часов** |
+| Phase 9 | 2-3 часа |
+| **Итого** | ~15-25 часов |
 
 ---
 
 ## Результат
 
-После завершения всех фаз:
+После завершения фаз 1-8:
 - ✅ Cloud Opus модели выдают thinking-блоки
 - ✅ Multi-turn conversations работают корректно
 - ✅ Thinking recovery работает автоматически
@@ -103,6 +55,11 @@ E:\1C\AIClient-2-API\
 - ✅ Error handling с retry работает
 - ✅ Configuration загружается из файлов и env
 - ✅ Все тесты проходят
+- ✅ Удалены legacy /v1beta/ endpoints
+
+**Phase 9** (в процессе):
+- Поддержка /v1/messages endpoint для gemini-antigravity
+- Конвертация Claude Messages API в Antigravity формат
 
 ---
 

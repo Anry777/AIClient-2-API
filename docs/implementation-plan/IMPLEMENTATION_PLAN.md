@@ -31,9 +31,10 @@
 | Phase 5 | Tool ID Recovery | Сопоставление functionCall с functionResponse при context compaction | 2-3 часа |
 | Phase 6 | Enhanced Error Handling | Расширенная обработка ошибок и retry логика | 1-2 часа |
 | Phase 7 | Configuration Schema | Полная конфигурация всех фич через config.json | 1 час |
-| Phase 8 | Testing & Validation | Unit тесты, integration тесты, ручное тестирование | 3-4 часа |
+ | Phase 8 | Testing & Validation | Unit тесты, integration тесты, ручное тестирование | 3-4 часа |
+| Phase 9 | Gemini-Antigravity Claude Messages Support | Поддержка /v1/messages endpoint для gemini-antigravity | 2-3 часа |
 
-**Итого**: ~13-19 часов работы
+**Итого**: ~15-22 часов работы
 
 ---
 
