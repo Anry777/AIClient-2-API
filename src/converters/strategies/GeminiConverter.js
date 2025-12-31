@@ -147,7 +147,57 @@ export class GeminiConverter extends BaseConverter {
      * Gemini Response -> OpenAI Response
      */
     toOpenAIResponse(geminiResponse, model) {
-        const content = this.processGeminiResponseContent(geminiResponse);
+        const candidate = geminiResponse?.candidates?.[0];
+        if (!candidate) {
+            return {
+                id: `chatcmpl-${uuidv4()}`,
+                object: "chat.completion",
+                created: Math.floor(Date.now() / 1000),
+                model: model,
+                choices: [{
+                    index: 0,
+                    message: { role: "assistant", content: "" },
+                    finish_reason: "stop",
+                }],
+                usage: {
+                    prompt_tokens: 0, completion_tokens: 0, total_tokens: 0,
+                    cached_tokens: 0, prompt_tokens_details: { cached_tokens: 0 },
+                    completion_tokens_details: { reasoning_tokens: 0 }
+                }
+            };
+        }
+
+        let content = '';
+        const toolCalls = [];
+        const parts = candidate.content?.parts;
+        if (parts && Array.isArray(parts)) {
+            for (const part of parts) {
+                if (part.text && !part.thought) content += part.text;
+                if (part.functionCall) {
+                    toolCalls.push({
+                        id: part.functionCall.id || `call_${uuidv4()}`,
+                        type: 'function',
+                        function: {
+                            name: part.functionCall.name,
+                            arguments: typeof part.functionCall.args === 'string'
+                                ? part.functionCall.args
+                                : JSON.stringify(part.functionCall.args)
+                        }
+                    });
+                }
+            }
+        }
+
+        let finishReason = 'stop';
+        if (candidate.finishReason) {
+            finishReason = candidate.finishReason === 'STOP' ? 'stop' :
+                candidate.finishReason === 'MAX_TOKENS' ? 'length' :
+                    candidate.finishReason.toLowerCase();
+        }
+        if (toolCalls.length > 0) finishReason = 'tool_calls';
+
+        const message = { role: "assistant", content: content || null };
+        if (toolCalls.length > 0) message.tool_calls = toolCalls;
 
         return {
             id: `chatcmpl-${uuidv4()}`,
@@ -156,11 +206,8 @@ export class GeminiConverter extends BaseConverter {
             model: model,
             choices: [{
                 index: 0,
-                message: {
-                    role: "assistant",
-                    content: content
-                },
-                finish_reason: "stop",
+                message: message,
+                finish_reason: finishReason,
             }],
             usage: geminiResponse.usageMetadata ? {
                 prompt_tokens: geminiResponse.usageMetadata.promptTokenCount || 0,
@@ -252,10 +299,79 @@ export class GeminiConverter extends BaseConverter {
             delta.tool_calls = toolCalls;
         }
 
-        // Don't return empty delta chunks
+        // CRITICAL: Filter out empty chunks with finish_reason: "stop" that come after tool_calls
+        // Gemini sends a final chunk with finishReason: "STOP" after tool calls, which tells
+        // the client that the conversation is finished, preventing tool execution continuation
+        if (Object.keys(delta).length === 0 && finishReason === 'stop') {
+            return null;
+        }
+
+        // Don't return empty delta chunks (unless we have finishReason)
         if (Object.keys(delta).length === 0 && !finishReason) {
             return null;
         }
+
+        // CRITICAL: When we have tool_calls, we need to send TWO chunks:
+        // 1. Chunk with tool_calls in delta (finish_reason: null)
+        // 2. Separate chunk with empty delta and finish_reason: "tool_calls"
+        // This is how OpenAI API works - tool_calls and finish_reason are in separate chunks
+        
+        if (toolCalls.length > 0 && finishReason) {
+            // Return array of two chunks
+            const chunkId = `chatcmpl-${uuidv4()}`;
+            const timestamp = Math.floor(Date.now() / 1000);
+            const usage = geminiChunk.usageMetadata ? {
+                prompt_tokens: geminiChunk.usageMetadata.promptTokenCount || 0,
+                completion_tokens: geminiChunk.usageMetadata.candidatesTokenCount || 0,
+                total_tokens: geminiChunk.usageMetadata.totalTokenCount || 0,
+                cached_tokens: geminiChunk.usageMetadata.cachedContentTokenCount || 0,
+                prompt_tokens_details: {
+                    cached_tokens: geminiChunk.usageMetadata.cachedContentTokenCount || 0
+                },
+                completion_tokens_details: {
+                    reasoning_tokens: geminiChunk.usageMetadata.thoughtsTokenCount || 0
+                }
+            } : {
+                prompt_tokens: 0,
+                completion_tokens: 0,
+                total_tokens: 0,
+                cached_tokens: 0,
+                prompt_tokens_details: { cached_tokens: 0 },
+                completion_tokens_details: { reasoning_tokens: 0 }
+            };
+
+            return [
+                // First chunk: tool_calls without finish_reason
+                {
+                    id: chunkId,
+                    object: "chat.completion.chunk",
+                    created: timestamp,
+                    model: model,
+                    choices: [{
+                        index: 0,
+                        delta: delta,
+                        finish_reason: null
+                    }],
+                    usage: usage
+                },
+                // Second chunk: empty delta with finish_reason: "tool_calls"
+                {
+                    id: chunkId,
+                    object: "chat.completion.chunk",
+                    created: timestamp,
+                    model: model,
+                    choices: [{
+                        index: 0,
+                        delta: {},
+                        finish_reason: 'tool_calls'
+                    }],
+                    usage: usage
+                }
+            ];
+        }
+
+        // For normal chunks (no tool_calls), use finish_reason as-is
+        const actualFinishReason = finishReason;
 
         const chunk = {
             id: `chatcmpl-${uuidv4()}`,
@@ -265,7 +381,7 @@ export class GeminiConverter extends BaseConverter {
             choices: [{
                 index: 0,
                 delta: delta,
-                finish_reason: finishReason,
+                finish_reason: actualFinishReason,
             }],
             usage: geminiChunk.usageMetadata ? {
                 prompt_tokens: geminiChunk.usageMetadata.promptTokenCount || 0,

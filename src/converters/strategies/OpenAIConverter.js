@@ -584,11 +584,20 @@ export class OpenAIConverter extends BaseConverter {
 
         const processedMessages = [];
         let lastMessage = null;
+        
+        console.log('[OpenAI->Gemini] Converting request with messages:', JSON.stringify(nonSystemMessages.map(m => ({
+            role: m.role,
+            hasToolCalls: !!m.tool_calls?.length,
+            toolCallId: m.tool_call_id,
+            hasName: !!m.name,
+            contentType: typeof m.content
+        })), null, 2));
 
         for (const message of nonSystemMessages) {
             const geminiRole = message.role === 'assistant' ? 'model' : message.role;
 
             if (geminiRole === 'tool') {
+                console.log('[OpenAI->Gemini] Processing tool message:', { tool_call_id: message.tool_call_id, name: message.name });
                 // Save previous model response with functionCall
                 if (lastMessage) {
                     processedMessages.push(lastMessage);
@@ -610,12 +619,14 @@ export class OpenAIConverter extends BaseConverter {
                         }
                     }
                 }
+                
+                console.log('[OpenAI->Gemini] Resolved function name:', functionName);
 
                 // Build functionResponse according to Gemini API spec
                 const parsedContent = safeParseJSON(message.content);
                 const contentStr = typeof parsedContent === 'string' ? parsedContent : JSON.stringify(parsedContent);
 
-                processedMessages.push({
+                const toolMsg = {
                     role: 'user',
                     parts: [{
                         functionResponse: {
@@ -626,7 +637,9 @@ export class OpenAIConverter extends BaseConverter {
                             }
                         }
                     }]
-                });
+                };
+                console.log('[OpenAI->Gemini] Created functionResponse:', JSON.stringify(toolMsg, null, 2));
+                processedMessages.push(toolMsg);
                 lastMessage = null;
                 continue;
             }

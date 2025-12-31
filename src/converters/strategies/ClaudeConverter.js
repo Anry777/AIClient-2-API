@@ -770,6 +770,9 @@ export class ClaudeConverter extends BaseConverter {
 
         // 处理消息
         if (Array.isArray(claudeRequest.messages)) {
+            // Track tool_use_id -> function name mappings
+            const toolIdToNameMap = new Map();
+            
             claudeRequest.messages.forEach(message => {
                 if (!message || typeof message !== 'object' || !message.role || !message.content) {
                     console.warn("Skipping invalid message in claudeRequest.messages.");
@@ -777,7 +780,17 @@ export class ClaudeConverter extends BaseConverter {
                 }
 
                 const geminiRole = message.role === 'assistant' ? 'model' : 'user';
-                const processedParts = this.processClaudeContentToGeminiParts(message.content);
+                
+                // Track tool_use_id to function name mappings
+                if (message.role === 'assistant' && Array.isArray(message.content)) {
+                    message.content.forEach(block => {
+                        if (block && block.type === 'tool_use' && block.id && block.name) {
+                            toolIdToNameMap.set(block.id, block.name);
+                        }
+                    });
+                }
+                
+                const processedParts = this.processClaudeContentToGeminiParts(message.content, toolIdToNameMap);
 
                 const functionResponsePart = processedParts.find(part => part.functionResponse);
                 if (functionResponsePart) {
@@ -1012,9 +1025,9 @@ export class ClaudeConverter extends BaseConverter {
     /**
      * 处理Claude内容到Gemini parts
      */
-    processClaudeContentToGeminiParts(content) {
-        if (!content) return [];
-
+    processClaudeContentToGeminiParts(content, toolIdToNameMap = new Map()) {
+        if (!content) return []; 
+        
         if (typeof content === 'string') {
             return [{ text: content }];
         }
@@ -1063,10 +1076,18 @@ export class ClaudeConverter extends BaseConverter {
 
                     case 'tool_result':
                         if (typeof block.tool_use_id === 'string') {
+                            // Get function name from mapping, fallback to tool_use_id
+                            const functionName = toolIdToNameMap.get(block.tool_use_id) || block.tool_use_id;
+                            const responseContent = typeof block.content === 'string' 
+                                ? block.content 
+                                : JSON.stringify(block.content || {});
                             parts.push({
                                 functionResponse: {
-                                    name: block.tool_use_id,
-                                    response: { content: block.content }
+                                    name: functionName,
+                                    response: {
+                                        name: functionName,
+                                        content: responseContent
+                                    }
                                 }
                             });
                         }

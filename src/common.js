@@ -203,6 +203,7 @@ export async function handleStreamRequest(res, service, model, requestBody, from
 
     // Generate a stable request ID for the entire stream
     const requestId = `chatcmpl-${uuidv4()}`;
+    let lastFinishReason = null;
 
     try {
         for await (const nativeChunk of nativeStream) {
@@ -227,20 +228,28 @@ export async function handleStreamRequest(res, service, model, requestBody, from
             for (const chunk of chunksToSend) {
                 if (addEvent) {
                     // fullOldResponseJson += chunk.type+"\n";
-                    // fullResponseJson += chunk.type+"\n";
                     res.write(`event: ${chunk.type}\n`);
-                    // console.log(`event: ${chunk.type}\n`);
                 }
 
-                // fullOldResponseJson += JSON.stringify(chunk)+"\n";
-                // fullResponseJson += JSON.stringify(chunk)+"\n\n";
                 res.write(`data: ${JSON.stringify(chunk)}\n\n`);
-                // console.log(`data: ${JSON.stringify(chunk)}\n`);
+                
+                // Log chunks with tool_calls for debugging
+                const chunkStr = JSON.stringify(chunk);
+                const chunkData = JSON.parse(chunkStr);
+                if (chunkData.choices?.[0]?.delta?.tool_calls || chunkData.choices?.[0]?.finish_reason === 'tool_calls') {
+                    console.log('[SSE Chunk] FULL chunk with tool_calls:', chunkStr);
+                }
+                // Log ALL finish_reason values
+                if (chunkData.choices?.[0]?.finish_reason) {
+                    console.log('[SSE Chunk] finish_reason:', chunkData.choices[0].finish_reason);
+                    lastFinishReason = chunkData.choices[0].finish_reason;
+                }
             }
         }
-        if (openStop && needsConversion) {
+        // CRITICAL: Don't send final [DONE] chunk with finish_reason: "stop" if last chunk was tool_calls
+        // This would tell the client that the conversation is finished, preventing tool execution continuation
+        if (openStop && needsConversion && lastFinishReason !== 'tool_calls') {
             res.write(`data: ${JSON.stringify(getOpenAIStreamChunkStop(model))}\n\n`);
-            // console.log(`data: ${JSON.stringify(getOpenAIStreamChunkStop(model))}\n`);
         }
 
         // 流式请求成功完成，统计使用次数，错误次数重置为0
@@ -393,6 +402,8 @@ export async function handleContentGenerationRequest(req, res, service, endpoint
     if (!originalRequestBody) {
         throw new Error("Request body is missing for content generation.");
     }
+
+    console.log('[Request Body] Full request body:', JSON.stringify(originalRequestBody, null, 2));
 
     const clientProviderMap = {
         [ENDPOINT_TYPE.OPENAI_CHAT]: MODEL_PROTOCOL_PREFIX.OPENAI,
