@@ -19,6 +19,7 @@ export const MODEL_PROTOCOL_PREFIX = {
     OPENAI_RESPONSES: 'openaiResponses',
     CLAUDE: 'claude',
     OLLAMA: 'ollama',
+    GEMINI_ANTIGRAVITY: 'gemini-antigravity',
 }
 
 export const MODEL_PROVIDER = {
@@ -184,7 +185,7 @@ export async function handleUnifiedResponse(res, responsePayload, isStream) {
     }
 }
 
-export async function handleStreamRequest(res, service, model, requestBody, fromProvider, toProvider, PROMPT_LOG_MODE, PROMPT_LOG_FILENAME, providerPoolManager, pooluuid) {
+export async function handleStreamRequest(res, service, model, requestBody, fromProvider, toProvider, PROMPT_LOG_MODE, PROMPT_LOG_FILENAME, providerPoolManager, pooluuid, endpointType = null) {
     let fullResponseText = '';
     let fullResponseJson = '';
     let fullOldResponseJson = '';
@@ -206,7 +207,7 @@ export async function handleStreamRequest(res, service, model, requestBody, from
     try {
         for await (const nativeChunk of nativeStream) {
             // Extract text for logging purposes
-            const chunkText = extractResponseText(nativeChunk, toProvider);
+            const chunkText = extractResponseText(nativeChunk, toProvider, endpointType);
             if (chunkText && !Array.isArray(chunkText)) {
                 fullResponseText += chunkText;
             }
@@ -276,9 +277,9 @@ export async function handleStreamRequest(res, service, model, requestBody, from
 }
 
 
-export async function handleUnaryRequest(res, service, model, requestBody, fromProvider, toProvider, PROMPT_LOG_MODE, PROMPT_LOG_FILENAME, providerPoolManager, pooluuid) {
+export async function handleUnaryRequest(res, service, model, requestBody, fromProvider, toProvider, PROMPT_LOG_MODE, PROMPT_LOG_FILENAME, providerPoolManager, pooluuid, endpointType = null) {
     try {
-        // The service returns the response in its native format (toProvider).
+        // The service returns response in its native format (toProvider).
         const needsConversion = getProtocolPrefix(fromProvider) !== getProtocolPrefix(toProvider);
         requestBody.model = model;
         // fs.writeFile('oldRequest'+Date.now()+'.json', JSON.stringify(requestBody));
@@ -288,7 +289,7 @@ export async function handleUnaryRequest(res, service, model, requestBody, fromP
             console.log('[DEBUG] Native Response:', JSON.stringify(nativeResponse, null, 2));
         }
 
-        const responseText = extractResponseText(nativeResponse, toProvider);
+        const responseText = extractResponseText(nativeResponse, toProvider, endpointType);
 
         // Convert the response back to the client's format (fromProvider), if necessary.
         let clientResponse = nativeResponse;
@@ -407,6 +408,12 @@ export async function handleContentGenerationRequest(req, res, service, endpoint
         throw new Error(`Unsupported endpoint type for content generation: ${endpointType}`);
     }
 
+    // Determine the target protocol for strategy selection
+    // Special case: gemini-antigravity with /v1/messages (Claude Messages API)
+    const toProviderProtocol = (toProvider === MODEL_PROVIDER.ANTIGRAVITY && endpointType === ENDPOINT_TYPE.CLAUDE_MESSAGE)
+        ? MODEL_PROTOCOL_PREFIX.GEMINI_ANTIGRAVITY
+        : getProtocolPrefix(toProvider);
+
     // 1. Convert request body from client format to backend format, if necessary.
     let processedRequestBody = originalRequestBody;
     // fs.writeFile('originalRequestBody'+Date.now()+'.json', JSON.stringify(originalRequestBody));
@@ -434,18 +441,18 @@ export async function handleContentGenerationRequest(req, res, service, endpoint
     }
 
     // 3. Apply system prompt from file if configured.
-    processedRequestBody = await _applySystemPromptFromFile(CONFIG, processedRequestBody, toProvider);
-    await _manageSystemPrompt(processedRequestBody, toProvider);
+    processedRequestBody = await _applySystemPromptFromFile(CONFIG, processedRequestBody, toProvider, endpointType);
+    await _manageSystemPrompt(processedRequestBody, toProvider, endpointType);
 
     // 4. Log the incoming prompt (after potential conversion to the backend's format).
-    const promptText = extractPromptText(processedRequestBody, toProvider);
+    const promptText = extractPromptText(processedRequestBody, toProvider, endpointType);
     await logConversation('input', promptText, CONFIG.PROMPT_LOG_MODE, PROMPT_LOG_FILENAME);
 
     // 5. Call the appropriate stream or unary handler, passing the provider info.
     if (isStream) {
-        await handleStreamRequest(res, service, model, processedRequestBody, fromProvider, toProvider, CONFIG.PROMPT_LOG_MODE, PROMPT_LOG_FILENAME, providerPoolManager, pooluuid);
+        await handleStreamRequest(res, service, model, processedRequestBody, fromProvider, toProvider, CONFIG.PROMPT_LOG_MODE, PROMPT_LOG_FILENAME, providerPoolManager, pooluuid, endpointType);
     } else {
-        await handleUnaryRequest(res, service, model, processedRequestBody, fromProvider, toProvider, CONFIG.PROMPT_LOG_MODE, PROMPT_LOG_FILENAME, providerPoolManager, pooluuid);
+        await handleUnaryRequest(res, service, model, processedRequestBody, fromProvider, toProvider, CONFIG.PROMPT_LOG_MODE, PROMPT_LOG_FILENAME, providerPoolManager, pooluuid, endpointType);
     }
 }
 
@@ -461,24 +468,44 @@ function _extractModelAndStreamInfo(req, requestBody, fromProvider) {
     return strategy.extractModelAndStreamInfo(req, requestBody);
 }
 
-async function _applySystemPromptFromFile(config, requestBody, toProvider) {
-    const strategy = ProviderStrategyFactory.getStrategy(getProtocolPrefix(toProvider));
+async function _applySystemPromptFromFile(config, requestBody, toProvider, endpointType = null) {
+    const protocol = getProtocolPrefix(toProvider);
+    // Special case: gemini-antigravity with Claude Messages API
+    const strategyProvider = (toProvider === MODEL_PROVIDER.ANTIGRAVITY && endpointType === ENDPOINT_TYPE.CLAUDE_MESSAGE)
+        ? MODEL_PROVIDER.ANTIGRAVITY
+        : protocol;
+    const strategy = ProviderStrategyFactory.getStrategy(strategyProvider, endpointType);
     return strategy.applySystemPromptFromFile(config, requestBody);
 }
 
-export async function _manageSystemPrompt(requestBody, provider) {
-    const strategy = ProviderStrategyFactory.getStrategy(getProtocolPrefix(provider));
+export async function _manageSystemPrompt(requestBody, provider, endpointType = null) {
+    const protocol = getProtocolPrefix(provider);
+    // Special case: gemini-antigravity with Claude Messages API
+    const strategyProvider = (provider === MODEL_PROVIDER.ANTIGRAVITY && endpointType === ENDPOINT_TYPE.CLAUDE_MESSAGE)
+        ? MODEL_PROVIDER.ANTIGRAVITY
+        : protocol;
+    const strategy = ProviderStrategyFactory.getStrategy(strategyProvider, endpointType);
     await strategy.manageSystemPrompt(requestBody);
 }
 
 // Helper functions for content extraction and conversion (from convert.js, but needed here)
-export function extractResponseText(response, provider) {
-    const strategy = ProviderStrategyFactory.getStrategy(getProtocolPrefix(provider));
+export function extractResponseText(response, provider, endpointType = null) {
+    const protocol = getProtocolPrefix(provider);
+    // Special case: gemini-antigravity with Claude Messages API
+    const strategyProvider = (provider === MODEL_PROVIDER.ANTIGRAVITY && endpointType === ENDPOINT_TYPE.CLAUDE_MESSAGE)
+        ? MODEL_PROVIDER.ANTIGRAVITY
+        : protocol;
+    const strategy = ProviderStrategyFactory.getStrategy(strategyProvider, endpointType);
     return strategy.extractResponseText(response);
 }
 
-export function extractPromptText(requestBody, provider) {
-    const strategy = ProviderStrategyFactory.getStrategy(getProtocolPrefix(provider));
+export function extractPromptText(requestBody, provider, endpointType = null) {
+    const protocol = getProtocolPrefix(provider);
+    // Special case: gemini-antigravity with Claude Messages API
+    const strategyProvider = (provider === MODEL_PROVIDER.ANTIGRAVITY && endpointType === ENDPOINT_TYPE.CLAUDE_MESSAGE)
+        ? MODEL_PROVIDER.ANTIGRAVITY
+        : protocol;
+    const strategy = ProviderStrategyFactory.getStrategy(strategyProvider, endpointType);
     return strategy.extractPromptText(requestBody);
 }
 

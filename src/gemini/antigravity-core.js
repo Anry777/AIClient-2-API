@@ -408,9 +408,7 @@ export class AntigravityApiService {
         console.log(`[Antigravity] Initialization complete. Project ID: ${this.projectId}`);
     }
 
-    get thinkingConfig() {
-        return this._thinkingConfig || this.thinkingConfig;
-    }
+
 
     async initializeAuth(forceRefresh = false) {
         // Check if Token needs refresh

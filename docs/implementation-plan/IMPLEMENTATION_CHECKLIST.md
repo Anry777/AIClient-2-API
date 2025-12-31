@@ -225,6 +225,8 @@
 | Phase 6 | ✅ Завершено | - |
 | Phase 7 | ✅ Завершено | - |
 | Phase 8 | ✅ Завершено | - |
+| Phase 9 | ✅ Завершено | - |
+| Phase 10 | ✅ Завершено | -
 
 ---
 
@@ -336,6 +338,79 @@
   - Concurrent requests работают (3 параллельных запроса завершены успешно)
   - Edge cases работают (пустой conversation: `Field required`, неверный API key: `Unauthorized`)
 - ✅ Все критерии успеха Phase 8 выполнены
+
+---
+
+## Phase 9: Gemini-Antigravity Claude Messages Support
+
+**Файл**: `PHASE_9.md`
+
+- [x] Создан `src/gemini/antigravity-strategy.js`
+- [x] Создан класс `AntigravityClaudeStrategy` extending `ProviderStrategy`
+- [x] Реализован `extractModelAndStreamInfo(req, requestBody)`
+- [x] Реализован `extractResponseText(response)`
+- [x] Реализован `extractPromptText(requestBody)`
+- [x] Реализован `applySystemPromptFromFile(config, requestBody)`
+- [x] Реализован `manageSystemPrompt(requestBody)`
+- [x] Добавлен импорт в `src/provider-strategies.js`
+- [x] Обновлен `ProviderStrategyFactory` для использования новой стратегии
+- [x] Обновлен `src/common.js` для поддержки endpointType в стратегиях
+- [x] Созданы unit тесты `src/gemini/tests/antigravity-claude-messages.test.js`
+- [x] Компиляция проверена
+- [x] Исправлен баг с рекурсивным getter thinkingConfig
+- [x] Сервис запускается без ошибок
+- [x] Unit тесты проходят (161 тест)
+- [x] Ручное тестирование `/v1/messages` с gemini-antigravity прошло успешно
+- [x] Ручное тестирование `/v1/chat/completions` с gemini-antigravity прошло успешно
+- [x] Списки моделей получены через `/v1/models`
+- [x] Несколько моделей протестированы (claude-opus-4-5-thinking, gemini-claude-sonnet-4-5-thinking, gemini-2.5-flash)
+- [x] Streaming протестирован на `/v1/messages`
+
+**Статус**: ✅ Завершено
+
+### Phase 9:
+- ✅ Все файлы созданы и модифицированы
+- ✅ Компиляция проходит успешно
+- ✅ Unit тесты созданы (antigravity-claude-messages.test.js)
+- ✅ AntigravityClaudeStrategy реализован для обработки Claude Messages API
+- ✅ ProviderStrategyFactory обновлен для регистрации новой стратегии
+- ✅ src/common.js обновлен для передачи endpointType в стратегии
+- ✅ Исправлен баг с рекурсивным getter thinkingConfig в antigravity-core.js
+- ✅ Docker контейнер пересобран и запущен
+- ✅ Ручное тестирование выполнено:
+  - `/v1/chat/completions` (OpenAI формат) работает с gemini-antigravity
+  - `/v1/messages` (Claude Messages формат) работает с gemini-antigravity
+  - Streaming работает на обоих эндпоинтах
+  - Модели протестированы:
+    - claude-opus-4-5-thinking ✅
+    - gemini-claude-sonnet-4-5-thinking ✅
+    - gemini-2.5-flash ✅
+  - Список моделей получается корректно через `/v1/models`
+
+---
+
+## Phase 10: Fix Tools Support on OpenAI Chat Completions for Antigravity
+
+**Файл**: `PHASE_10.md`
+
+### Проблема:
+- ❌ `/v1/chat/completions` + tools вызывал ошибку 500 для gemini-antigravity (ИСПРАВЛЕНО)
+
+### Решение:
+- ✅ Проблема была в рекурсивном getter `thinkingConfig` в `src/gemini/antigravity-core.js`
+- ✅ Исправлено в Phase 9 (строка 411-413 удалена)
+
+### Результаты тестирования:
+- [x] Изучен `src/converters/strategies/OpenAIConverter.js`
+- [x] Изучен `src/converters/strategies/ClaudeConverter.js`
+- [x] Проверена обработка `tools` в request конвертации
+- [x] Найдена причина ошибки (recursive getter)
+- [x] Исправлено в Phase 9
+- [x] `/v1/chat/completions` + tools работает
+- [x] Streaming + tools работает
+- [x] Модели протестированы: gemini-2.5-flash, claude-opus-4-5-thinking, gemini-claude-sonnet-4-5-thinking
+
+**Статус**: ✅ Завершено (решено в Phase 9)
 
 ---
 
