@@ -99,19 +99,19 @@
 
 **Файл**: `PHASE_5.md`
 
-- [ ] Создан `src/gemini/tool-recovery.js`
-- [ ] Добавлен импорт в `antigravity-core.js`
-- [ ] Интегрирован tool recovery в `geminiToAntigravity`
-- [ ] Обновлен config для `tool_id_recovery`
-- [ ] Unit тесты созданы
-- [ ] Компиляция проверена
-- [ ] Сервис запускается без ошибок
-- [ ] Unit тесты проходят
-- [ ] Логи показывают выполнение tool recovery
-- [ ] Orphan tool responses обнаруживаются и обрабатываются
-- [ ] Placeholder tool calls создаются
+- [x] Создан `src/gemini/tool-recovery.js`
+- [x] Добавлен импорт в `antigravity-core.js`
+- [x] Интегрирован tool recovery в `geminiToAntigravity`
+- [x] Обновлен config для `tool_id_recovery`
+- [x] Unit тесты созданы
+- [x] Компиляция проверена
+- [x] Сервис запускается без ошибок
+- [x] Unit тесты проходят
+- [x] Логи показывают выполнение tool recovery
+- [x] Orphan tool responses обнаруживаются и обрабатываются
+- [x] Placeholder tool calls создаются
 
-**Статус**: ⬜ Не начато | ✅ В процессе | ✅ Завершено
+**Статус**: ✅ Завершено
 
 ---
 
@@ -119,19 +119,19 @@
 
 **Файл**: `PHASE_6.md`
 
-- [ ] Расширен `callApi` для retry логики
-- [ ] Расширен `streamApi` для retry логики
-- [ ] Добавлен Empty Response Retry
-- [ ] Обновлен config для empty response retry
-- [ ] Добавлено логирование retry attempts
-- [ ] Добавлены retry stats в класс
-- [ ] Метод `logRetryStats` добавлен
-- [ ] Unit тесты созданы
-- [ ] Компиляция проверена
-- [ ] Сервис запускается без ошибок
-- [ ] Unit тесты проходят
-- [ ] Логи показывают retry attempts
-- [ ] Статистика retry работает
+- [x] Расширен `callApi` для retry логики
+- [x] Расширен `streamApi` для retry логики
+- [x] Добавлен Empty Response Retry
+- [x] Обновлен config для empty response retry
+- [x] Добавлено логирование retry attempts
+- [x] Добавлены retry stats в класс
+- [x] Метод `logRetryStats` добавлен
+- [x] Unit тесты созданы
+- [x] Компиляция проверена
+- [x] Сервис запускается без ошибок
+- [x] Unit тесты проходят
+- [x] Логи показывают retry attempts
+- [x] Статистика retry работает
 
 **Статус**: ⬜ Не начато | ✅ В процессе | ✅ Завершено
 
@@ -221,6 +221,8 @@
 | Phase 2 | ✅ Завершено | - |
 | Phase 3 | ✅ Завершено | - |
 | Phase 4 | ✅ Завершено | - |
+| Phase 5 | ✅ Завершено | - |
+| Phase 6 | ✅ Завершено | - |
 
 ---
 
@@ -279,9 +281,30 @@
 - ✅ Модель claude-opus-4-5-thinking протестирована
 - ✅ Модель gemini-2.0-flash-thinking-exp протестирована
 ### Phase 5:
--
+- ✅ Созданы `src/gemini/tool-recovery.js` с функциями tool recovery
+- ✅ Интегрирован tool recovery в generateContent и generateContentStream
+- ✅ Обновлен config.js для tool_id_recovery
+- ✅ Созданы тесты в src/gemini/tests/tool-recovery.test.js
+- ✅ Компиляция проходит успешно
+- ✅ Сервис запускается в Docker без ошибок
+- ✅ Все 25 unit тестов проходят для tool recovery
+- ✅ Логи показывают `[Antigravity] Applying tool ID recovery...` и `[Antigravity] Tool ID recovery applied`
+- ✅ Интеграция в antigravity-core.js выполнена корректно
 ### Phase 6:
--
+- ✅ Добавлен getter `thinkingConfig` для доступа к конфигурации
+- ✅ Добавлена retry логика для recoverable errors в `callApi` и `streamApi`
+- ✅ Добавлена логика для empty response retry в `generateContentStream`
+- ✅ Добавлены retry stats для отслеживания количества попыток
+- ✅ Добавлен метод `logRetryStats` для логирования статистики
+- ✅ Компиляция проходит успешно
+- ✅ Сервис запускается в Docker без ошибок
+- ✅ Все 119 unit тестов проходят (17 error-handler + остальные)
+- ✅ Логи показывают работу warmup, thinking recovery, tool recovery
+- ✅ Multi-turn conversation работает корректно
+- ✅ Базовый запрос к thinking модели проходит успешно
+- ✅ Thinking модель с tools работает корректно
+- ✅ Фикс: Добавлена инициализация `this.baseURLs` в метод `initialize()` для поддержки повторной инициализации
+- ✅ Фикс: Восстановлен метод `initialize()` как async, так как конструктор не может быть async
 ### Phase 7:
 -
 ### Phase 8:

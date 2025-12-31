@@ -23,6 +23,16 @@ export const DEFAULT_CONFIG = {
     session_recovery: true,
     auto_resume: true,
     resume_text: "continue",
+
+    // Tool ID Recovery (Phase 5)
+    tool_id_recovery: true,
+
+    // Empty Response Retry (Phase 6)
+    empty_response_max_attempts: 4,
+    empty_response_retry_delay_ms: 2000,
+
+    // Recoverable Error Retries (Phase 6)
+    recoverable_error_max_retries: 3,
 };
 
 /**

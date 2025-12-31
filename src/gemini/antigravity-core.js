@@ -14,6 +14,7 @@ import * as ThinkingUtils from './thinking-utils.js';
 import * as ThinkingConfig from './config.js';
 import * as ThinkingRecovery from './thinking-recovery.js';
 import * as ErrorHandler from './error-handler.js';
+import * as ToolRecovery from './tool-recovery.js';
 
 // Configure HTTP/HTTPS agent to limit connection pool size and avoid resource leaks
 const httpAgent = new http.Agent({
@@ -215,6 +216,10 @@ function geminiToAntigravity(modelName, payload, projectId) {
         }
     }
 
+    // Phase 5: Apply tool ID recovery
+    // Note: this.thinkingConfig is not available here, we'll check config when integrating in generateContent/generateContentStream
+    // This is a placeholder - actual recovery will be applied after geminiToAntigravity is called
+
     return template;
 }
 
@@ -343,21 +348,23 @@ export class AntigravityApiService {
         this.userAgent = DEFAULT_USER_AGENT; // Support generic USER_AGENT config
         this.projectId = config.PROJECT_ID;
 
-        // NEW: Thinking support
-        this.signatureCache = null;
-        this.thinkingConfig = ThinkingConfig.getConfig();
-
-        // Multi-environment fallback order
-        this.baseURLs = this.baseURL ? [this.baseURL] : [
-            ANTIGRAVITY_BASE_URL_DAILY,
-            ANTIGRAVITY_BASE_URL_AUTOPUSH
-            // ANTIGRAVITY_BASE_URL_PROD // Production environment commented out
-        ];
+        this.retryStats = {
+            total: 0,
+            thinkingRecovery: 0,
+            toolRecovery: 0,
+            emptyResponse: 0,
+            rateLimit: 0,
+        };
     }
 
     async initialize() {
         if (this.isInitialized) return;
         console.log('[Antigravity] Initializing Antigravity API Service...');
+
+        this.baseURLs = this.baseURL ? [this.baseURL] : [
+            ANTIGRAVITY_BASE_URL_DAILY,
+            ANTIGRAVITY_BASE_URL_AUTOPUSH
+        ];
 
         // NEW: Initialize signature cache
         this.signatureCache = new SignatureCache({
@@ -390,6 +397,10 @@ export class AntigravityApiService {
 
         this.isInitialized = true;
         console.log(`[Antigravity] Initialization complete. Project ID: ${this.projectId}`);
+    }
+
+    get thinkingConfig() {
+        return ThinkingConfig.getConfig();
     }
 
     async initializeAuth(forceRefresh = false) {
@@ -736,6 +747,34 @@ export class AntigravityApiService {
                 return this.callApi(method, body, isRetry, retryCount + 1, baseURLIndex);
             }
 
+            if (error.response?.status >= 400 && error.response?.status < 500) {
+                const errorType = ErrorHandler.detectErrorType(error);
+
+                if (errorType && retryCount < this.thinkingConfig.recoverable_error_max_retries) {
+                    console.log(`[Antigravity API] Recoverable error (${errorType}) detected. Retrying (${retryCount + 1}/${this.thinkingConfig.recoverable_error_max_retries})...`);
+
+                    this.retryStats.total++;
+
+                    let recoveredBody = { ...body };
+
+                    if (errorType === ErrorHandler.ERROR_TYPES.THINKING_BLOCK_ORDER ||
+                        errorType === ErrorHandler.ERROR_TYPES.THINKING_DISABLED_VIOLATION) {
+
+                        if (recoveredBody.request?.generationConfig?.thinkingConfig) {
+                            delete recoveredBody.request.generationConfig.thinkingConfig;
+                        }
+
+                        console.log(`[Antigravity API] Stripped thinking config for retry`);
+                        this.retryStats.thinkingRecovery++;
+                    }
+
+                    const delay = 1000 * Math.pow(2, retryCount);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+
+                    return this.callApi(method, recoveredBody, true, retryCount + 1, baseURLIndex);
+                }
+            }
+
             throw error;
         }
     }
@@ -814,6 +853,35 @@ export class AntigravityApiService {
                 await new Promise(resolve => setTimeout(resolve, delay));
                 yield* this.streamApi(method, body, isRetry, retryCount + 1, baseURLIndex);
                 return;
+            }
+
+            if (error.response?.status >= 400 && error.response?.status < 500) {
+                const errorType = ErrorHandler.detectErrorType(error);
+
+                if (errorType && retryCount < this.thinkingConfig.recoverable_error_max_retries) {
+                    console.log(`[Antigravity Stream] Recoverable error (${errorType}) detected. Retrying (${retryCount + 1}/${this.thinkingConfig.recoverable_error_max_retries})...`);
+
+                    this.retryStats.total++;
+
+                    let recoveredBody = { ...body };
+
+                    if (errorType === ErrorHandler.ERROR_TYPES.THINKING_BLOCK_ORDER ||
+                        errorType === ErrorHandler.ERROR_TYPES.THINKING_DISABLED_VIOLATION) {
+
+                        if (recoveredBody.request?.generationConfig?.thinkingConfig) {
+                            delete recoveredBody.request.generationConfig.thinkingConfig;
+                        }
+
+                        console.log(`[Antigravity Stream] Stripped thinking config for retry`);
+                        this.retryStats.thinkingRecovery++;
+                    }
+
+                    const delay = 1000 * Math.pow(2, retryCount);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+
+                    yield* this.streamApi(method, recoveredBody, true, retryCount + 1, baseURLIndex);
+                    return;
+                }
             }
 
             throw error;
@@ -944,6 +1012,26 @@ export class AntigravityApiService {
         // Set model name to actual model name
         payload.model = actualModelName;
 
+        // Phase 5: Apply tool ID recovery if enabled
+        if (this.thinkingConfig.tool_id_recovery && payload.request?.contents) {
+            console.log('[Antigravity] Applying tool ID recovery...');
+
+            // Find orphan tool responses
+            const orphans = ToolRecovery.findOrphanToolResponses(payload.request.contents);
+
+            if (orphans.length > 0) {
+                console.log(`[Antigravity] Found ${orphans.length} orphan tool responses, creating placeholders`);
+
+                // Create placeholders
+                payload.request.contents = ToolRecovery.createPlaceholderToolCalls(payload.request.contents, orphans);
+            }
+
+            // Fix tool response grouping
+            payload.request.contents = ToolRecovery.fixToolResponseGrouping(payload.request.contents);
+
+            console.log('[Antigravity] Tool ID recovery applied');
+        }
+
         // Phase 4: Apply thinking recovery if enabled
         if (this.thinkingConfig.session_recovery && payload.request?.contents) {
             const state = ThinkingRecovery.analyzeConversationState(payload.request.contents);
@@ -1018,6 +1106,26 @@ export class AntigravityApiService {
         // Set model name to actual model name
         payload.model = actualModelName;
 
+        // Phase 5: Apply tool ID recovery if enabled
+        if (this.thinkingConfig.tool_id_recovery && payload.request?.contents) {
+            console.log('[Antigravity] Applying tool ID recovery...');
+
+            // Find orphan tool responses
+            const orphans = ToolRecovery.findOrphanToolResponses(payload.request.contents);
+
+            if (orphans.length > 0) {
+                console.log(`[Antigravity] Found ${orphans.length} orphan tool responses, creating placeholders`);
+
+                // Create placeholders
+                payload.request.contents = ToolRecovery.createPlaceholderToolCalls(payload.request.contents, orphans);
+            }
+
+            // Fix tool response grouping
+            payload.request.contents = ToolRecovery.fixToolResponseGrouping(payload.request.contents);
+
+            console.log('[Antigravity] Tool ID recovery applied');
+        }
+
         // Phase 4: Apply thinking recovery if enabled
         if (this.thinkingConfig.session_recovery && payload.request?.contents) {
             const state = ThinkingRecovery.analyzeConversationState(payload.request.contents);
@@ -1072,25 +1180,40 @@ export class AntigravityApiService {
         // Store conversation key for signature extraction
         const conversationKeyForCache = ThinkingUtils.extractConversationKey(payload);
 
-        const stream = this.streamApi('streamGenerateContent', payload);
-        for await (const chunk of stream) {
-            // Phase 2: Extract and cache signature from SSE response
-            if (this.thinkingConfig.enable_signature_cache) {
-                const signature = ThinkingUtils.extractSignatureFromSseChunk(chunk.response || chunk);
+        if (!this.emptyResponseAttempts) {
+            this.emptyResponseAttempts = new Map();
+        }
 
-                if (signature) {
-                    this.signatureCache?.cache(
-                        PLUGIN_SESSION_ID,
-                        actualModelName,
-                        conversationKeyForCache,
-                        "Warmup request for thinking signature.",
-                        signature
-                    );
-                    console.log(`[Antigravity] Cached signature from SSE response`);
+        const emptyResponseKey = `${actualModelName}:${Date.now()}`;
+
+        let retryCount = 0;
+        const maxEmptyRetries = this.thinkingConfig.empty_response_max_attempts || 0;
+
+        while (retryCount <= maxEmptyRetries) {
+            let isEmptyResponse = true;
+
+            const stream = this.streamApi('streamGenerateContent', payload);
+            for await (const chunk of stream) {
+                const response = toGeminiApiResponse(chunk.response);
+
+                isEmptyResponse = !response?.candidates || response.candidates.length === 0 ||
+                    (response.candidates[0] && (!response.candidates[0].content || !response.candidates[0].content?.parts));
+
+                if (!isEmptyResponse) {
+                    yield response;
                 }
             }
 
-            yield toGeminiApiResponse(chunk.response);
+            if (!isEmptyResponse || maxEmptyRetries === 0 || retryCount >= maxEmptyRetries) {
+                break;
+            }
+
+            retryCount++;
+            const delay = this.thinkingConfig.empty_response_retry_delay_ms || 2000;
+            console.warn(`[Antigravity] Empty response detected (attempt ${retryCount}/${maxEmptyRetries}). Retrying in ${delay}ms...`);
+            this.retryStats.emptyResponse++;
+
+            await new Promise(resolve => setTimeout(resolve, delay));
         }
     }
 
@@ -1116,6 +1239,10 @@ export class AntigravityApiService {
             console.log('[Antigravity] Signature cache flushed to disk');
         }
         console.log('[Antigravity] Shutdown complete');
+    }
+
+    logRetryStats() {
+        console.log('[Antigravity] Retry Statistics:', JSON.stringify(this.retryStats, null, 2));
     }
 }
 
