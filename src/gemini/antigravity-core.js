@@ -95,13 +95,7 @@ function generateRequestID() {
     return 'agent-' + uuidv4();
 }
 
-/**
- * Generate Random Session ID
- */
-function generateSessionID() {
-    const n = Math.floor(Math.random() * 9000000000000000000);
-    return '-' + n.toString();
-}
+// generateSessionID removed - using stable PLUGIN_SESSION_ID instead
 
 /**
  * Generate Random Project ID
@@ -370,7 +364,8 @@ export class AntigravityApiService {
             write_interval_seconds: this.thinkingConfig.signature_cache_write_interval_seconds,
             debug_thinking: this.thinkingConfig.debug_thinking,
         });
-        console.log(`[Antigravity] Stable Session ID: ${PLUGIN_SESSION_ID}`);
+        console.log(`[Antigravity] Using stable session ID: ${PLUGIN_SESSION_ID}`);
+        console.log(`[Antigravity] Session ID will remain constant across all requests in this process`);
 
         // Phase 2: Cleanup expired signatures on startup
         if (this.thinkingConfig.enable_signature_cache) {

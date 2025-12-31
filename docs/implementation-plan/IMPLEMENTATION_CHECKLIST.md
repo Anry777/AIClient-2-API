@@ -57,20 +57,20 @@
 
 **Файл**: `PHASE_3.md`
 
-- [ ] Удалена случайная генерация `generateSessionID`
-- [ ] Заменен на `PLUGIN_SESSION_ID` в `geminiToAntigravity`
-- [ ] Проверено отсутствие других использований `generateSessionID`
+- [x] Удалена случайная генерация `generateSessionID`
+- [x] Заменен на `PLUGIN_SESSION_ID` в `geminiToAntigravity`
+- [x] Проверено отсутствие других использований `generateSessionID`
 - [x] Убедиться, что `PLUGIN_SESSION_ID` объявлен глобально
-- [ ] Добавлено логирование стабильности sessionId
-- [ ] Unit тесты созданы
-- [ ] Компиляция проверена
-- [ ] Сервис запускается без ошибок
-- [ ] Логи показывают стабильный session ID
-- [ ] Unit тесты проходят
-- [ ] Multi-turn conversation работает корректно
-- [ ] Session ID не меняется между запросами
+- [x] Добавлено логирование стабильности sessionId
+- [x] Unit тесты созданы
+- [x] Компиляция проверена
+- [x] Сервис запускается без ошибок
+- [x] Логи показывают стабильный session ID
+- [x] Unit тесты проходят (11 тестов stable-session-id)
+- [x] Multi-turn conversation работает корректно
+- [x] Session ID не меняется между запросами
 
-**Статус**: ⬜ Не начато
+**Статус**: ✅ Завершено
 
 ---
 
@@ -219,7 +219,7 @@
 |-------|---------|-----------|
 | Phase 1 | ✅ Завершено | - |
 | Phase 2 | ✅ Завершено | - |
-| Phase 3 | ⬜ Не начато | - |
+| Phase 3 | ✅ Завершено | - |
 | Phase 4 | ⬜ Не начато | - |
 
 ---
@@ -253,7 +253,17 @@
   - Дисковый кеш создается (`data/signature-cache/cache.json`)
   - Подписи сохраняются с ключом, timestamp
 ### Phase 3:
-- ⬜ Не начато
+- ✅ Удалена функция `generateSessionID()` - заменена на `PLUGIN_SESSION_ID`
+- ✅ PLUGIN_SESSION_ID объявлен на уровне модуля как `const PLUGIN_SESSION_ID = \`-${uuidv4()}\``
+- ✅ Добавлено логирование в initialize():
+  - `[Antigravity] Using stable session ID: <uuid>`
+  - `[Antigravity] Session ID will remain constant across all requests in this process`
+- ✅ Создан файл `stable-session-id.test.js` с 11 тестами
+- ✅ Все 51 unit тест проходят (11 stable-session-id + 10 signature-cache + 30 thinking-utils)
+- ✅ Логи при запуске подтверждают стабильный session ID
+- ✅ Ручное тестирование выполнено:
+  - Два запроса отправлены ("Say hello", "Say goodbye")
+  - Оба запроса успешны с одним session ID `-b3e81a88-939b-4404-95e6-4b11804daeb8`
 ### Phase 4:
 - ⬜ Не начато
 ### Phase 5:
