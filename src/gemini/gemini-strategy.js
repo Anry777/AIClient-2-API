@@ -6,12 +6,8 @@ import { ProviderStrategy } from '../provider-strategy.js';
  */
 class GeminiStrategy extends ProviderStrategy {
     extractModelAndStreamInfo(req, requestBody) {
-        const requestUrl = new URL(req.url, `http://${req.headers.host}`);
-        const urlPattern = new RegExp(`/v1beta/models/(.+?):(${API_ACTIONS.GENERATE_CONTENT}|${API_ACTIONS.STREAM_GENERATE_CONTENT})`);
-        const urlMatch = requestUrl.pathname.match(urlPattern);
-        const [, urlmodel, action] = urlMatch;
-        const model = urlmodel;
-        const isStream = action === API_ACTIONS.STREAM_GENERATE_CONTENT;
+        const model = requestBody.model;
+        const isStream = requestBody.stream;
         return { model, isStream };
     }
 

@@ -153,7 +153,6 @@ async function startServer() {
         console.log(`\nUnified API Server running on http://${CONFIG.HOST}:${CONFIG.SERVER_PORT}`);
         console.log(`Supports multiple API formats:`);
         console.log(`  • OpenAI-compatible: /v1/chat/completions, /v1/responses, /v1/models`);
-        console.log(`  • Gemini-compatible: /v1beta/models, /v1beta/models/{model}:generateContent`);
         console.log(`  • Claude-compatible: /v1/messages`);
         console.log(`  • Health check: /health`);
         console.log(`  • UI Management Console: http://${CONFIG.HOST}:${CONFIG.SERVER_PORT}/`);
