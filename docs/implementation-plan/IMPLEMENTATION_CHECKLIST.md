@@ -227,7 +227,7 @@
 | Phase 8 | ✅ Завершено | - |
 | Phase 9 | ✅ Завершено | - |
 | Phase 10 | ✅ Завершено | - |
-| Phase 11 | ✅ Завершено | - API Testing Guide создан |
+| Phase 11 | ⬜ Не начато | - |
 
 ---
 
@@ -412,6 +412,21 @@
 - [x] Модели протестированы: gemini-2.5-flash, claude-opus-4-5-thinking, gemini-claude-sonnet-4-5-thinking
 
 **Статус**: ✅ Завершено (решено в Phase 9)
+
+---
+
+## Phase 11: Claude Tool Hallucination Prevention
+
+**Файл**: `PHASE_11.md`
+
+- [ ] Добавлена константа `CLAUDE_TOOL_SYSTEM_INSTRUCTION` в `antigravity-core.js`
+- [ ] Обновлена логика `geminiToAntigravity` для инъекции инструкции
+- [ ] Реализована проверка `modelName.includes('claude')`
+- [ ] Создан тест `src/gemini/tests/claude-tool-safety.test.js`
+- [ ] Тесты проходят (инструкция добавляется только куда нужно)
+- [ ] Ручное тестирование с Claude Opus/Sonnet подтверждает отсутствие галлюцинаций
+
+**Статус**: ⬜ Не начато
 
 ---
 

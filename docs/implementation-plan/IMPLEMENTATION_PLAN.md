@@ -33,6 +33,8 @@
 | Phase 7 | Configuration Schema | Полная конфигурация всех фич через config.json | 1 час |
  | Phase 8 | Testing & Validation | Unit тесты, integration тесты, ручное тестирование | 3-4 часа |
 | Phase 9 | Gemini-Antigravity Claude Messages Support | Поддержка /v1/messages endpoint для gemini-antigravity | 2-3 часа |
+| Phase 10 | Fix Tools Support on OpenAI Chat Completions | Исправление ошибки 500 при использовании tools в /v1/chat/completions | 1 час |
+| Phase 11 | Claude Tool Hallucination Prevention | Защита от галлюцинаций инструментов для моделей Claude | 1-2 часа |
 
 **Итого**: ~15-22 часов работы
 
@@ -58,6 +60,9 @@
 - `PHASE_6.md` - Enhanced Error Handling
 - `PHASE_7.md` - Configuration Schema
 - `PHASE_8.md` - Testing & Validation
+- `PHASE_9.md` - Gemini-Antigravity Claude Messages Support
+- `PHASE_10.md` - Fix Tools Support on OpenAI Chat Completions
+- `PHASE_11.md` - Claude Tool Hallucination Prevention
 
 ---
 
@@ -94,6 +99,9 @@ E:\1C\AIClient-2-API\
 ├── PHASE_6.md
 ├── PHASE_7.md
 ├── PHASE_8.md
+├── PHASE_9.md
+├── PHASE_10.md
+├── PHASE_11.md
 ├── IMPLEMENTATION_PLAN.md (этот файл)
 └── src/gemini/
     ├── antigravity-core.js (модифицирован)

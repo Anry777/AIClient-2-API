@@ -1,3 +1,63 @@
+import { jest, describe, it, expect, beforeEach } from '@jest/globals';
+
+// Mock all problematic dependencies before importing
+jest.mock('open', () => ({
+    default: jest.fn()
+}));
+
+jest.mock('google-auth-library', () => ({
+    OAuth2Client: jest.fn()
+}));
+
+jest.mock('../../common.js', () => ({
+    API_ACTIONS: {},
+    formatExpiryTime: jest.fn(),
+    MODEL_PROTOCOL_PREFIX: {
+        OPENAI: 'openai:',
+        GEMINI: 'gemini:',
+        CLAUDE: 'claude:'
+    },
+    FETCH_SYSTEM_PROMPT_FILE: '/tmp/test-prompt.txt',
+    extractSystemPromptFromRequestBody: jest.fn((requestBody, provider) => {
+        if (provider === 'gemini:') {
+            const geminiSystemInstruction = requestBody.system_instruction || requestBody.systemInstruction;
+            if (geminiSystemInstruction?.parts) {
+                return geminiSystemInstruction.parts
+                    .filter(p => p?.text)
+                    .map(p => p.text)
+                    .join('\n');
+            } else if (typeof geminiSystemInstruction === 'string') {
+                return geminiSystemInstruction;
+            }
+        }
+        return '';
+    })
+}));
+
+jest.mock('../../provider-models.js', () => ({
+    getProviderModels: jest.fn()
+}));
+
+jest.mock('../signature-cache.js', () => ({
+    SignatureCache: jest.fn()
+}));
+
+jest.mock('../thinking-utils.js', () => ({}));
+
+jest.mock('../config.js', () => ({
+    getDefaultConfig: jest.fn()
+}));
+
+jest.mock('../thinking-recovery.js', () => ({}));
+
+jest.mock('../error-handler.js', () => ({}));
+
+jest.mock('../tool-recovery.js', () => ({}));
+
+jest.mock('uuid', () => ({
+    v4: jest.fn(() => 'test-uuid')
+}));
+
 import { AntigravityClaudeStrategy } from '../antigravity-strategy.js';
 import { MODEL_PROTOCOL_PREFIX, FETCH_SYSTEM_PROMPT_FILE } from '../../common.js';
 import { promises as fs } from 'fs';
